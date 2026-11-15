@@ -111,9 +111,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 ? 'Đã tắt bắt buộc cập nhật.'
                 : 'Đã lưu: khách dùng bản thấp hơn ' . trim((string) $_POST['min_version']) . ' phải cập nhật mới dùng tiếp.';
         } elseif ($action === 'telegram') {
-            $flash = vs2_telegram('🔔 Thử thông báo từ trang quản trị: kết nối Telegram hoạt động.')
-                ? 'Đã gửi tin nhắn thử tới Telegram.'
-                : 'Không gửi được: kiểm tra telegram_bot_token và telegram_chat_id trong config.php.';
+            $tgError = vs2_telegram_send('🔔 Thử thông báo từ trang quản trị: kết nối Telegram hoạt động.');
+            $flash = $tgError === null ? 'Đã gửi tin thử tới Telegram.' : 'Không gửi được Telegram: ' . $tgError;
         }
     } catch (Throwable $error) {
         $flash = 'Lỗi: ' . $error->getMessage();

@@ -496,14 +496,27 @@ function vs2_money(int $amount): string
 
 function vs2_telegram(string $html): bool
 {
+    return vs2_telegram_send($html) === null;
+}
+
+/**
+ * Gửi tin Telegram. Trả null khi thành công, ngược lại là lý do lỗi bằng tiếng Việt
+ * (hiện ở nút "Thử Telegram" và ghi vào telegram_error.log để tra cứu).
+ */
+function vs2_telegram_send(string $html): ?string
+{
     $c = vs2_config();
     $token = trim((string) ($c['telegram_bot_token'] ?? ''));
     $chat = trim((string) ($c['telegram_chat_id'] ?? ''));
+    // Hay dán nhầm cả chữ "bot" ở đầu token.
+    if (stripos($token, 'bot') === 0 && preg_match('/^bot\d+:/i', $token)) {
+        $token = substr($token, 3);
+    }
     if ($token === '' || $chat === '' || getenv('VS2_NO_TELEGRAM')) {
         if ($outbox = getenv('VS2_TELEGRAM_OUTBOX')) {
             file_put_contents($outbox, $html . "\n---\n", FILE_APPEND);
         }
-        return false;
+        return 'Chưa điền telegram_bot_token hoặc telegram_chat_id trong config.php.';
     }
     $body = http_build_query([
         'chat_id' => $chat,
@@ -512,25 +525,59 @@ function vs2_telegram(string $html): bool
         'disable_web_page_preview' => 'true',
     ]);
     $url = "https://api.telegram.org/bot$token/sendMessage";
+    $status = 0;
+    $network = '';
     if (function_exists('curl_init')) {
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => $body,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 6,
+            CURLOPT_TIMEOUT => 8,
+            CURLOPT_CONNECTTIMEOUT => 5,
         ]);
         $result = curl_exec($ch);
+        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $network = $result === false ? curl_error($ch) : '';
         // (curl_close() không cần từ PHP 8.0 và bị đánh dấu lỗi thời ở PHP 8.5.)
-        return $result !== false && curl_getinfo($ch, CURLINFO_HTTP_CODE) === 200;
+    } else {
+        $context = stream_context_create(['http' => [
+            'method' => 'POST',
+            'header' => 'Content-Type: application/x-www-form-urlencoded',
+            'content' => $body,
+            'timeout' => 8,
+            'ignore_errors' => true,
+        ]]);
+        $result = @file_get_contents($url, false, $context);
+        if ($result === false) {
+            $network = (string) (error_get_last()['message'] ?? 'không kết nối được');
+        } elseif (preg_match('/^HTTP\/\S+\s+(\d+)/', $http_response_header[0] ?? '', $m)) {
+            $status = (int) $m[1];
+        }
     }
-    $context = stream_context_create(['http' => [
-        'method' => 'POST',
-        'header' => 'Content-Type: application/x-www-form-urlencoded',
-        'content' => $body,
-        'timeout' => 6,
-    ]]);
-    return @file_get_contents($url, false, $context) !== false;
+    if ($network === '' && $status === 200) {
+        return null;
+    }
+    if ($network !== '') {
+        $error = 'Hosting không kết nối được tới api.telegram.org (' . $network
+            . '). Hãy nhờ nhà cung cấp hosting mở kết nối ra ngoài tới api.telegram.org cổng 443.';
+    } else {
+        $desc = (string) (json_decode((string) $result, true)['description'] ?? "HTTP $status");
+        $error = match (true) {
+            $status === 401, $status === 404 => 'Token bot sai (' . $desc . '). Lấy lại token ở @BotFather.',
+            str_contains($desc, 'chat not found') => 'Sai Chat ID, hoặc bạn chưa bấm Start với bot / chưa thêm bot vào nhóm (' . $desc . ').',
+            str_contains($desc, 'bot was blocked') => 'Bạn đã chặn bot: mở bot trên Telegram và bấm Bỏ chặn / Start.',
+            str_contains($desc, 'kicked') || str_contains($desc, 'not a member') => 'Bot không còn trong nhóm: thêm lại bot vào nhóm.',
+            str_contains($desc, 'upgraded to a supergroup') => 'Nhóm đã nâng cấp thành siêu nhóm: Chat ID mới bắt đầu bằng -100… (' . $desc . ').',
+            default => 'Telegram từ chối: ' . $desc,
+        };
+    }
+    @file_put_contents(
+        vs2_dir() . '/telegram_error.log',
+        date('c') . ' ' . $error . "\n",
+        FILE_APPEND | LOCK_EX
+    );
+    return $error;
 }
 
 // ── tiện ích HTTP ───────────────────────────────────────────────────────────
