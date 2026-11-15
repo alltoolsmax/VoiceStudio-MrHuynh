@@ -466,9 +466,8 @@ function vs2_telegram(string $html): bool
             CURLOPT_TIMEOUT => 6,
         ]);
         $result = curl_exec($ch);
-        $ok = $result !== false && curl_getinfo($ch, CURLINFO_HTTP_CODE) === 200;
-        curl_close($ch);
-        return $ok;
+        // (curl_close() không cần từ PHP 8.0 và bị đánh dấu lỗi thời ở PHP 8.5.)
+        return $result !== false && curl_getinfo($ch, CURLINFO_HTTP_CODE) === 200;
     }
     $context = stream_context_create(['http' => [
         'method' => 'POST',
