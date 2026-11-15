@@ -11,6 +11,7 @@ import { electronApp, is, optimizer } from '@electron-toolkit/utils';
 import { BackendSupervisor, backendRoot } from './backend';
 import { applySavedTorchVariant } from './torch-choice';
 import { assertTrustedMainFrame, registerIpc, wireWindowMaximizeEvents } from './ipc';
+import { registerLicenseIpc } from './license/ipc';
 import { APP_ORIGIN, installAppProtocol, registerAppScheme } from './protocol';
 import { electronProxyPort, startDevBackendProxy } from './dev-backend-proxy';
 import { DesktopUpdater, registerUpdateIpc } from './updater';
@@ -463,6 +464,11 @@ if (singleInstance && !app.requestSingleInstanceLock()) {
         RENDERER_DIR,
         () => backend.requestHeaders(),
       );
+      let licenseActivated: () => void = () => {};
+      const licenseController = registerLicenseIpc(
+        () => mainWindow,
+        () => licenseActivated(),
+      );
       registerIpc(
         backend,
         () => mainWindow,
@@ -542,7 +548,22 @@ if (singleInstance && !app.requestSingleInstanceLock()) {
       tray.setToolTip(DISPLAY_NAME);
       closeCapture = installNativeCapture(PRELOAD_PATH, tray, () => mainWindow);
       tray.on('click', () => showWindow());
-      observeMainProcessTask(backend.start(), mainErrors, 'Backend startup');
+      // Voice Studio - Mr.Huỳnh: hết hạn dùng thử thì chỉ khởi động engine sau
+      // khi kích hoạt key; màn hình kích hoạt vẫn hiện ngay.
+      let backendStarted = false;
+      const startBackendOnce = () => {
+        if (backendStarted) return;
+        backendStarted = true;
+        observeMainProcessTask(backend.start(), mainErrors, 'Backend startup');
+      };
+      observeMainProcessTask(
+        licenseController.ready().then((license) => {
+          if (license.state !== 'expired') startBackendOnce();
+        }),
+        mainErrors,
+        'License check',
+      );
+      licenseActivated = startBackendOnce;
       if (headlessOwner) {
         idleShutdown = new IdleShutdown({
           idleMs: idleShutdownMs(),

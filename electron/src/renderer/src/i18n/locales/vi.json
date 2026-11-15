@@ -4307,5 +4307,24 @@
       "failed": "Thất bại",
       "cancelled": "Đã hủy"
     }
+  },
+  "activation": {
+    "title": "Kích hoạt Voice Studio - Mr.Huỳnh",
+    "expired_trial_ended": "Thời gian dùng thử 24 giờ đã hết.",
+    "expired_tampered": "Dữ liệu dùng thử trên máy này không hợp lệ.",
+    "expired_clock": "Giờ máy tính đang bị lùi. Hãy chỉnh lại giờ cho đúng rồi mở lại ứng dụng.",
+    "instructions": "Gửi mã máy bên dưới cho Mr.Huỳnh để nhận key kích hoạt vĩnh viễn, rồi dán key vào ô bên dưới.",
+    "machine_code": "Mã máy",
+    "copy": "Sao chép",
+    "copied": "Đã sao chép",
+    "key_label": "Key kích hoạt",
+    "activate": "Kích hoạt",
+    "success": "Kích hoạt thành công. Cảm ơn bạn đã ủng hộ!",
+    "error_format": "Key không đúng định dạng. Hãy dán lại đầy đủ key.",
+    "error_signature": "Key không hợp lệ.",
+    "error_machine": "Key này được cấp cho máy khác. Hãy gửi đúng mã máy ở trên để nhận key.",
+    "error_version": "Key này không dùng được cho phiên bản ứng dụng này.",
+    "contact": "Liên hệ nhận key",
+    "trial_left": "Dùng thử: còn {{hours}} giờ {{minutes}} phút"
   }
 }

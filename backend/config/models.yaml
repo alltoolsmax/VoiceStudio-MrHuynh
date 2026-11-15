@@ -43,13 +43,23 @@
 models:
   # ── Required ──────────────────────────────────────────────────────────
 
+  # Voice Studio - Mr.Huỳnh: VoxCPM2 (Apache-2.0, dùng thương mại được, có tiếng
+  # Việt) là engine mặc định. OmniVoice (trọng số CC-BY-NC, cấm thương mại) vẫn
+  # cài thêm được trong Cài đặt nhưng không còn bắt buộc hay được đề xuất.
+  - repo_id: "openbmb/VoxCPM2"
+    label: "VoxCPM2 (30 languages incl. Vietnamese, voice cloning and design)"
+    role: TTS
+    engines: [voxcpm2]
+    size_gb: 5.0
+    required: true
+    curated_on: [all]
+
   - repo_id: "k2-fsa/OmniVoice"
-    label: "VoiceStudio TTS (k2-fsa/OmniVoice, 600+ languages, zero-shot)"
+    label: "OmniVoice (k2-fsa/OmniVoice, 600+ languages, zero-shot; non-commercial weights)"
     role: TTS
     engines: [omnivoice, omnivoice-subprocess]
     size_gb: 2.4
-    required: true
-    curated_on: [all]
+    curated_on: []
 
   - repo_id: "audio-cpp/audio.cpp-gguf"
     label: "audio.cpp native bundle (Breeze-TTS-2 + Sortformer diarisation)"
@@ -329,13 +339,6 @@ models:
     engines: [kittentts]
     size_gb: 0.08
     curated_on: [all]
-
-  - repo_id: "openbmb/VoxCPM2"
-    label: "VoxCPM2 (30 languages, voice cloning and design)"
-    role: TTS
-    engines: [voxcpm2]
-    size_gb: 5.0
-    curated_on: [cuda]
 
   - repo_id: "FunAudioLLM/Fun-CosyVoice3-0.5B-2512"
     label: "CosyVoice 3 0.5B (multilingual zero-shot)"

@@ -79,6 +79,33 @@ def required_models() -> list[dict]:
     ]
 
 
+# Voice Studio - Mr.Huỳnh: engine mặc định chạy trong môi trường riêng (sidecar).
+# Lần đầu thiết lập, tự cài engine đó và chờ cài xong như chờ tải model.
+DEFAULT_ENGINE_SETUP_ID = "voxcpm2"
+DEFAULT_ENGINE_SETUP_LABEL = "VoxCPM2 engine"
+
+
+def default_engine_missing() -> list[dict]:
+    """The default sidecar engine, when it is the chosen one and not installed.
+
+    Starts its one-click install in the background (idempotent: a running job
+    or a finished install is reported, never restarted). Any probe failure
+    reports nothing, so setup never blocks on an engine it cannot install here.
+    """
+    try:
+        from services import sidecar_install, tts_backend
+
+        if tts_backend.active_backend_id() != DEFAULT_ENGINE_SETUP_ID:
+            return []
+        if sidecar_install.get_status(DEFAULT_ENGINE_SETUP_ID).get("installed"):
+            return []
+        sidecar_install.start_install(DEFAULT_ENGINE_SETUP_ID)
+    except Exception:  # noqa: BLE001 — unsupported host or probe error: do not block setup
+        logger.debug("default engine setup probe failed", exc_info=True)
+        return []
+    return [{"repo_id": f"engine:{DEFAULT_ENGINE_SETUP_ID}", "label": DEFAULT_ENGINE_SETUP_LABEL}]
+
+
 @router.get("/setup/status", response_model=SetupStatusResponse)
 def setup_status():
     """Snapshot the setup state so the client can pick its boot screen."""
@@ -87,6 +114,7 @@ def setup_status():
         for model in required_models()
         if not is_cached(model["repo_id"])
     ]
+    missing.extend(default_engine_missing())
     cache = hf_cache_dir()
     free_gb = _disk_free_gb(cache)
     return {

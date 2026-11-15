@@ -27,7 +27,7 @@ it('previews every pack without active engines and installs only the chosen tier
       return {
         disk_free_gb: 100,
         models: [
-          ['k2-fsa/OmniVoice', 'OmniVoice'],
+          ['openbmb/VoxCPM2', 'VoxCPM2'],
           ['Systran/faster-whisper-base', 'Whisper base'],
           ['deepdml/faster-whisper-large-v3-turbo-ct2', 'Whisper Turbo'],
           ['Systran/faster-whisper-large-v3', 'Whisper large'],

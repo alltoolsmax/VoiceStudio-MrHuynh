@@ -70,7 +70,10 @@ export function useEngineSetup(operation = 'tts') {
       const available = engines.tts.backends.filter(
         (backend) => backend.available && backend.routing_status !== 'unavailable',
       );
-      const candidate = available.find((backend) => backend.id === 'omnivoice') ?? available[0];
+      const candidate =
+        available.find((backend) => backend.id === 'voxcpm2') ??
+        available.find((backend) => backend.id === 'omnivoice') ??
+        available[0];
       if (!candidate) return false;
       await apiJson('/engines/select', {
         method: 'POST',

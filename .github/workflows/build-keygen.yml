@@ -1,0 +1,35 @@
+# Build app cấp key (Windows .exe) cho Mr.Huỳnh.
+# Actions → "Build KeyGen" → Run workflow, rồi tải file trong mục Artifacts.
+# Khóa bí mật KHÔNG nằm trong file .exe: lần đầu mở app, chọn tệp vsmh-private-key.txt.
+name: Build KeyGen
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: bash
+        working-directory: tools/keygen
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+      - run: pip install cryptography openpyxl pyinstaller pytest
+      - run: python -m pytest -q
+      - name: Build exe
+        run: >
+          pyinstaller --noconfirm --onefile --windowed --name "VSMH-KeyGen"
+          --icon icon.ico --add-data "icon.ico;." --add-data "logo-64.png;."
+          keygen_app.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: VSMH-KeyGen-Windows
+          path: tools/keygen/dist/VSMH-KeyGen.exe
+          if-no-files-found: error

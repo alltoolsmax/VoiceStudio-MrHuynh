@@ -148,7 +148,10 @@ export interface PythonDiscoveryResult {
   partial: boolean;
   scannedRoots: string[];
 }
-export interface PythonRepairPlan { interpreter: string; packages: string[]; }
+export interface PythonRepairPlan {
+  interpreter: string;
+  packages: string[];
+}
 
 export interface BackendConnection {
   remote: boolean;
@@ -282,7 +285,12 @@ export interface RepairAgentState {
 }
 export type RepairAgentEvent =
   | { sessionId: string; type: 'output'; text: string }
-  | { sessionId: string; type: 'state'; status: RepairAgentStatus; exitCode?: number | null };
+  | {
+      sessionId: string;
+      type: 'state';
+      status: RepairAgentStatus;
+      exitCode?: number | null;
+    };
 
 export type NativePermissionStatus = 'granted' | 'denied' | 'prompt' | 'unknown';
 
@@ -423,7 +431,29 @@ export interface SetupConnectionCheck {
   checkedAt: number;
 }
 
+export type LicenseStatus =
+  | { state: 'licensed'; machineCode: string; issuedAt: string | null }
+  | { state: 'trial'; machineCode: string; endsAt: string }
+  | {
+      state: 'expired';
+      machineCode: string;
+      reason: 'trial_ended' | 'tampered' | 'clock';
+    };
+
+export type LicenseActivateResult =
+  | { ok: true; status: LicenseStatus }
+  | {
+      ok: false;
+      reason: 'format' | 'signature' | 'machine' | 'version';
+      status: LicenseStatus;
+    };
+
 export interface VoiceStudioBridge {
+  /** Bản quyền Voice Studio - Mr.Huỳnh: dùng thử 24 giờ, key vĩnh viễn theo mã máy. */
+  license?: {
+    status(): Promise<LicenseStatus>;
+    activate(key: string): Promise<LicenseActivateResult>;
+  };
   /** VoiceStudio Cloud account; never carries a token. */
   account: {
     get(): Promise<AccountPublicState>;
@@ -551,7 +581,12 @@ export interface VoiceStudioBridge {
       pythonPath: string;
       packages: string[];
       /** Translated native confirmation labels; the plan itself comes from main. */
-      dialog?: { title: string; message: string; install: string; cancel: string };
+      dialog?: {
+        title: string;
+        message: string;
+        install: string;
+        cancel: string;
+      };
     }): Promise<{
       ok: boolean;
       pythonPath: string;
@@ -565,7 +600,9 @@ export interface VoiceStudioBridge {
       repairPlan?: PythonRepairPlan;
       outputTail?: string;
     }>;
-    onPythonRepairProgress(callback: (event: { text: string; stream: 'stdout' | 'stderr' }) => void): () => void;
+    onPythonRepairProgress(
+      callback: (event: { text: string; stream: 'stdout' | 'stderr' }) => void,
+    ): () => void;
     useManagedPython(): Promise<{ ok: boolean }>;
     discoverPythonRuntimes(): Promise<PythonDiscoveryResult>;
     useDiscoveredPythonRuntime(pythonPath: string): Promise<{
@@ -626,7 +663,9 @@ export interface VoiceStudioBridge {
     authorizeMediaTool(kind: 'ffmpeg' | 'ffprobe'): Promise<AuthorizedPathSelection | null>;
     /** Authorize a chosen model cache directory, or the platform default when reset is true. */
     authorizeModelsDirectory(reset?: boolean): Promise<AuthorizedPathSelection | null>;
-    chooseEngineModelDirectory(engineId: 'omnivoice' | 'mlx-audio'): Promise<AuthorizedPathSelection | null>;
+    chooseEngineModelDirectory(
+      engineId: 'omnivoice' | 'mlx-audio',
+    ): Promise<AuthorizedPathSelection | null>;
     extractScript(input: { name: string; data: Uint8Array }): Promise<string>;
     /** Native "Save as…" for a generated take: main fetches the URL and writes the file. */
     saveAudio(req: SaveAudioRequest): Promise<SaveAudioResult>;

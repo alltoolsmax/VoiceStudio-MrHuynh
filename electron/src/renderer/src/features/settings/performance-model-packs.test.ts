@@ -20,7 +20,7 @@ describe('performance model packs', () => {
   it('uses a small ASR and dictation set for Fast', () => {
     const pack = resolvePerformanceModelPack(
       [
-        model('k2-fsa/OmniVoice', 2.4, true),
+        model('openbmb/VoxCPM2', 5.0, true),
         model('Systran/faster-whisper-base', 0.15),
         model('csukuangfj/sherpa-onnx-whisper-tiny', 0.104),
         model('facebook/nllb-200-distilled-600M', 2.4),
@@ -29,7 +29,7 @@ describe('performance model packs', () => {
     );
 
     expect(pack.models.map((item) => item.repo_id)).toEqual([
-      'k2-fsa/OmniVoice',
+      'openbmb/VoxCPM2',
       'Systran/faster-whisper-base',
       'csukuangfj/sherpa-onnx-whisper-tiny',
     ]);
@@ -37,9 +37,9 @@ describe('performance model packs', () => {
     expect(pack.downloadGb).toBeCloseTo(0.254);
   });
 
-  it('adds accurate ASR, multilingual dictation fallback, and NLLB for Quality', () => {
+  it('adds accurate ASR and multilingual dictation fallback for Quality, never the non-commercial NLLB', () => {
     const repos = [
-      model('k2-fsa/OmniVoice', 2.4, true),
+      model('openbmb/VoxCPM2', 5.0, true),
       model('Systran/faster-whisper-large-v3', 2.9),
       model('csukuangfj/sherpa-onnx-whisper-tiny', 0.104),
       model('csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8', 0.67),
@@ -47,14 +47,17 @@ describe('performance model packs', () => {
     ];
     const pack = resolvePerformanceModelPack(repos, 'quality');
 
-    expect(pack.models).toHaveLength(5);
-    expect(pack.downloadGb).toBeCloseTo(6.074);
+    expect(pack.models).toHaveLength(4);
+    expect(pack.models.map((item) => item.repo_id)).not.toContain(
+      'facebook/nllb-200-distilled-600M',
+    );
+    expect(pack.downloadGb).toBeCloseTo(3.674);
   });
 
   it('omits models unsupported by this device', () => {
     const pack = resolvePerformanceModelPack(
       [
-        model('k2-fsa/OmniVoice', 2.4, true),
+        model('openbmb/VoxCPM2', 5.0, true),
         model('Systran/faster-whisper-base', 0.15, false, false),
         model('csukuangfj/sherpa-onnx-whisper-tiny', 0.104),
       ],
@@ -66,7 +69,7 @@ describe('performance model packs', () => {
 
   it('preselects the largest tier whose download fits the model disk', () => {
     const catalogue = [
-      model('k2-fsa/OmniVoice', 2.4),
+      model('openbmb/VoxCPM2', 5.0),
       model('Systran/faster-whisper-base', 0.15),
       model('csukuangfj/sherpa-onnx-whisper-tiny', 0.1),
       model('deepdml/faster-whisper-large-v3-turbo-ct2', 1.6),
@@ -74,9 +77,9 @@ describe('performance model packs', () => {
       model('Systran/faster-whisper-large-v3', 3.1),
       model('facebook/nllb-200-distilled-600M', 2.4),
     ];
-    // Max needs 8.7 GB; Balanced 4.8 GB; Fast 2.65 GB (plus 1 GB headroom).
-    expect(largestFittingTier(catalogue, 'max', 5, 1)).toBe('fast');
-    expect(largestFittingTier(catalogue, 'max', 6, 1)).toBe('balanced');
+    // Max needs 8.9 GB; Balanced 7.4 GB; Fast 5.25 GB (plus 1 GB headroom).
+    expect(largestFittingTier(catalogue, 'max', 7, 1)).toBe('fast');
+    expect(largestFittingTier(catalogue, 'max', 8.5, 1)).toBe('balanced');
     expect(largestFittingTier(catalogue, 'max', 100, 10)).toBe('max');
     expect(largestFittingTier(catalogue, 'balanced', 100, 10)).toBe('balanced');
     expect(largestFittingTier(catalogue, 'max', 1, 10)).toBe('fast');

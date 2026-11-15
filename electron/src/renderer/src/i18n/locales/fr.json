@@ -4309,5 +4309,24 @@
       "failed": "Échec",
       "cancelled": "Annulé"
     }
+  },
+  "activation": {
+    "title": "Activate Voice Studio - Mr.Huỳnh",
+    "expired_trial_ended": "Your 24-hour trial has ended.",
+    "expired_tampered": "The trial data on this computer is not valid.",
+    "expired_clock": "This computer's clock has been set back. Correct the time, then reopen the app.",
+    "instructions": "Send the machine code below to Mr.Huỳnh to get a lifetime activation key, then paste the key below.",
+    "machine_code": "Machine code",
+    "copy": "Copy",
+    "copied": "Copied",
+    "key_label": "Activation key",
+    "activate": "Activate",
+    "success": "Activated. Thank you for your support!",
+    "error_format": "This key is not in the right format. Paste the whole key again.",
+    "error_signature": "This key is not valid.",
+    "error_machine": "This key was issued for another computer. Send the machine code above to get your key.",
+    "error_version": "This key does not work with this version of the app.",
+    "contact": "Contact for a key",
+    "trial_left": "Trial: {{hours}} h {{minutes}} min left"
   }
 }

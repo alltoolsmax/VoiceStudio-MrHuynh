@@ -2,20 +2,21 @@ import type { CatalogueModel } from './model-catalogue-query';
 import { performanceTiers, type PerformanceTier } from '@/hooks/use-performance-profile';
 import { modelDiskShortfall } from './model-disk-space';
 
-const OMNIVOICE = 'k2-fsa/OmniVoice';
+// Voice Studio - Mr.Huỳnh: VoxCPM2 (Apache-2.0) thay OmniVoice (trọng số cấm thương mại).
+const VOXCPM2 = 'openbmb/VoxCPM2';
 const WHISPER_BASE = 'Systran/faster-whisper-base';
 const WHISPER_TURBO = 'deepdml/faster-whisper-large-v3-turbo-ct2';
 const WHISPER_LARGE = 'Systran/faster-whisper-large-v3';
 const MLX_WHISPER_LARGE = 'mlx-community/whisper-large-v3-mlx';
 const SHERPA_TINY = 'csukuangfj/sherpa-onnx-whisper-tiny';
 const SHERPA_PARAKEET = 'csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8';
-const NLLB = 'facebook/nllb-200-distilled-600M';
 
 export const performancePackRepos: Record<PerformanceTier, readonly string[]> = {
-  fast: [OMNIVOICE, WHISPER_BASE, SHERPA_TINY],
-  balanced: [OMNIVOICE, WHISPER_TURBO, SHERPA_TINY, SHERPA_PARAKEET],
-  quality: [OMNIVOICE, WHISPER_LARGE, SHERPA_TINY, SHERPA_PARAKEET, NLLB],
-  max: [OMNIVOICE, WHISPER_LARGE, SHERPA_TINY, SHERPA_PARAKEET, NLLB],
+  // NLLB (CC-BY-NC) không còn nằm trong gói đề xuất vì cấm dùng thương mại.
+  fast: [VOXCPM2, WHISPER_BASE, SHERPA_TINY],
+  balanced: [VOXCPM2, WHISPER_TURBO, SHERPA_TINY, SHERPA_PARAKEET],
+  quality: [VOXCPM2, WHISPER_LARGE, SHERPA_TINY, SHERPA_PARAKEET],
+  max: [VOXCPM2, WHISPER_LARGE, SHERPA_TINY, SHERPA_PARAKEET],
 };
 
 const acceleratedVariants: Readonly<Record<string, string>> = {

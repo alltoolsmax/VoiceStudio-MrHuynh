@@ -4888,11 +4888,15 @@ def gpu_routing_verdict() -> dict:
     }
 
 
+DEFAULT_TTS_BACKEND = "voxcpm2"
+
+
 def active_backend_id() -> str:
     # Env var > persisted UI choice > default. Env wins so power-users can
     # pin a backend without the Settings picker silently undoing it.
     from core import prefs
-    return prefs.resolve("tts_backend", env="OMNIVOICE_TTS_BACKEND", default="omnivoice")
+    # Voice Studio - Mr.Huỳnh: mặc định VoxCPM2 (Apache-2.0, dùng thương mại được).
+    return prefs.resolve("tts_backend", env="OMNIVOICE_TTS_BACKEND", default=DEFAULT_TTS_BACKEND)
 
 
 # Cached active backend instance + its id (MM2-01). Without this, every call

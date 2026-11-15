@@ -8,9 +8,19 @@
 ## Tải về
 
 Vào mục **Releases** của repo này, tải file `VoiceStudio-MrHuynh-<phiên bản>-win-x64.exe` rồi chạy để cài đặt.
-Lần mở đầu tiên, ứng dụng sẽ tự cài phần lõi và tải mô hình giọng nói (cần mạng, khoảng vài GB).
+Lần mở đầu tiên, ứng dụng sẽ tự cài phần lõi, engine giọng nói **VoxCPM2** (30 ngôn ngữ, có tiếng Việt,
+giấy phép Apache-2.0) và tải mô hình (cần mạng, khoảng 15 GB dung lượng trống). Máy có card NVIDIA
+chạy nhanh hơn nhiều; máy chỉ có CPU vẫn chạy được nhưng chậm.
 
 Bộ cài chưa được ký số, nên Windows SmartScreen có thể hiện cảnh báo: bấm **More info → Run anyway**.
+
+## Bản quyền và kích hoạt
+
+- Cài xong là **dùng thử miễn phí 24 giờ**, không cần key. Góc trái màn hình hiện thời gian còn lại.
+- Hết 24 giờ, ứng dụng hiện **mã máy** (dạng `VSMH-XXXX-XXXX-XXXX-XXXX`). Gửi mã này cho Mr.Huỳnh
+  qua một trong các kênh bên dưới để nhận **key kích hoạt vĩnh viễn**, rồi dán key vào ứng dụng.
+- Key chỉ dùng được trên đúng máy có mã máy đó. Cài lại Windows hoặc thay bo mạch chủ sẽ đổi mã máy,
+  khi đó hãy gửi mã mới để được cấp lại key.
 
 ## Hỗ trợ
 
@@ -35,6 +45,6 @@ Voice Studio - Mr.Huỳnh dựa trên [VoiceStudio](https://github.com/debpalash
 © Palash Debnath và cộng sự, phát hành theo giấy phép **GNU AGPL-3.0** (xem [LICENSE](LICENSE)
 và [LICENSE-NOTICE.md](LICENSE-NOTICE.md)). Mã nguồn của bản đã sửa này được công khai trong repo này
 theo đúng giấy phép đó. Mô hình AI tải về có giấy phép riêng của từng mô hình
-(ví dụ trọng số OmniVoice mặc định là CC-BY-NC, không dùng cho mục đích thương mại).
+(OmniVoice và NLLB là CC-BY-NC, không dùng cho mục đích thương mại, nên không còn được cài mặc định).
 
 README gốc của VoiceStudio: [README.upstream.md](README.upstream.md).

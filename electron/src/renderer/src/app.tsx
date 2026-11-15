@@ -22,6 +22,7 @@ import { RealtimeEventSync } from '@/hooks/use-realtime-events';
 import { GenerateBudgetSync } from '@/hooks/use-generate-budget-sync';
 import { runRendererTask } from '@/lib/global-error-recovery';
 import { WebAuthGate } from '@/components/web-auth-gate';
+import { LicenseGate } from '@/components/license-gate';
 import { ModelLicenceGate } from '@/features/settings/model-licence-acceptance';
 
 export function App() {
@@ -88,23 +89,25 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
         <WebAuthGate>
-          <NativeDictationSync />
-          <ModelInstallSync />
-          <RealtimeEventSync />
-          <GenerateBudgetSync />
-          <AnalyticsRuntime />
-          <CloudSyncRuntime />
-          <AnalyticsConsentBanner />
-          <GpuOfferBanner />
-          <GenerationProvider>
-            <FirstSoundHandoff />
-            <TooltipProvider>
-              <RouterProvider router={router} />
-              <ModelLicenceGate />
-              <UpdateRestartConfirm />
-              <Toaster richColors position="bottom-right" />
-            </TooltipProvider>
-          </GenerationProvider>
+          <LicenseGate>
+            <NativeDictationSync />
+            <ModelInstallSync />
+            <RealtimeEventSync />
+            <GenerateBudgetSync />
+            <AnalyticsRuntime />
+            <CloudSyncRuntime />
+            <AnalyticsConsentBanner />
+            <GpuOfferBanner />
+            <GenerationProvider>
+              <FirstSoundHandoff />
+              <TooltipProvider>
+                <RouterProvider router={router} />
+                <ModelLicenceGate />
+                <UpdateRestartConfirm />
+                <Toaster richColors position="bottom-right" />
+              </TooltipProvider>
+            </GenerationProvider>
+          </LicenseGate>
         </WebAuthGate>
       </ErrorBoundary>
     </QueryClientProvider>

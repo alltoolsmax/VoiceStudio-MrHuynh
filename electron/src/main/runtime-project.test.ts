@@ -1298,7 +1298,7 @@ describe('packaged runtime setup', () => {
   });
   it('pins the release workflow installer version', async () => {
     const release = await readFile(
-      new URL('../../../.github/workflows/electron-release.yml', import.meta.url),
+      new URL('../../../.github/workflows/build-windows.yml', import.meta.url),
       'utf8',
     );
     expect(release).toContain(`version: '${UV_VERSION}'`);
