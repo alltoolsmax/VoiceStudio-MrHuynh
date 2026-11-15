@@ -87,7 +87,7 @@ _CURATED_TAGS = {"all", "darwin-arm64", "darwin-x86_64", "cuda", "rocm", "cpu"}
 
 def test_only_tts_is_required():
     required = [m for m in _models() if m.get("required")]
-    assert [m["repo_id"] for m in required] == ["k2-fsa/OmniVoice"], (
+    assert [m["repo_id"] for m in required] == ["openbmb/VoxCPM2"], (
         "exactly one required model is allowed — the TTS engine. ASR models "
         f"are optional curated picks (curated_on). Got: {required}"
     )

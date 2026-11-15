@@ -35,3 +35,15 @@ def test_unavailable_engines_explained_synthetic():
 def test_active_engine_unavailable_fails():
     payload = {"active": "ghost", "backends": [{"id": "real", "available": True}]}
     assert E.active_engine_available(payload).passed is False
+
+
+def test_the_setup_installed_default_engine_passes_only_when_registered_and_explained():
+    pending = {"active": "voxcpm2", "backends": [
+        {"id": "voxcpm2", "available": False, "reason": "voxcpm package not installed"},
+    ]}
+    assert E.active_engine_available(pending).passed is True
+    assert E.active_engine_available({"active": "voxcpm2", "backends": []}).passed is False
+    other = {"active": "kittentts", "backends": [
+        {"id": "kittentts", "available": False, "reason": "not installed"},
+    ]}
+    assert E.active_engine_available(other).passed is False

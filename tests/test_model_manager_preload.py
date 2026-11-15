@@ -252,3 +252,7 @@ def test_preload_keeps_default_omnivoice_warmup(model_manager, monkeypatch):
     asyncio.run(model_manager.preload_model())
 
     assert model_manager.model is loaded
+
+
+# Voice Studio - Mr.Huỳnh: these tests exercise the OmniVoice default path.
+pytestmark = pytest.mark.usefixtures("omnivoice_default")

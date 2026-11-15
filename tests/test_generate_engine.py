@@ -272,3 +272,7 @@ def test_generate_preserves_retryable_engine_contention(client, monkeypatch, no_
         assert response.status_code == 503
         assert response.headers["retry-after"] == "1"
         assert response.headers["x-omnivoice-retryable"] == "true"
+
+
+# Voice Studio - Mr.Huỳnh: these tests exercise the OmniVoice default path.
+pytestmark = pytest.mark.usefixtures("omnivoice_default")

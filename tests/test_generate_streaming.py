@@ -521,3 +521,7 @@ def test_stream_sends_blank_keepalives_during_slow_render(
     assert b"" in lines[:-1]
     events = [json.loads(line) for line in lines if line.strip()]
     assert [event["type"] for event in events] == ["start", "chunk", "done"]
+
+
+# Voice Studio - Mr.Huỳnh: these tests exercise the OmniVoice default path.
+pytestmark = pytest.mark.usefixtures("omnivoice_default")

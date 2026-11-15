@@ -221,3 +221,7 @@ def test_generate_500_detail_carries_socks_hint(client, monkeypatch):
     )
     assert "unset ALL_PROXY/HTTPS_PROXY" in detail
     assert r.json()["docs_topic"] == "SOCKS_PROXY_SUPPORT_MISSING"
+
+
+# Voice Studio - Mr.Huỳnh: these tests exercise the OmniVoice default path.
+pytestmark = pytest.mark.usefixtures("omnivoice_default")

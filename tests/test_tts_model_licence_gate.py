@@ -18,7 +18,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "backend"))
 import importlib  # noqa: E402
 
-pytestmark = pytest.mark.model_licence_gate  # real enforcement, see conftest
+pytestmark = [
+    pytest.mark.model_licence_gate,  # real enforcement, see conftest
+    pytest.mark.usefixtures("omnivoice_default"),  # Voice Studio - Mr.Huỳnh: OmniVoice path
+]
 
 GATED_REPO = "IndexTeam/IndexTTS-2.5"  # indextts2: unknown category, gated
 

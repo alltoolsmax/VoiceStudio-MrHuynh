@@ -572,3 +572,7 @@ def test_accepting_waits_while_another_quant_is_downloading(eligible, monkeypatc
         "status": "already_running", "quant": quants.quant_status()["selected"]})
     assert eligible.offer.respond(True)["download"]["status"] == "already_running"
     assert tts_backend.active_backend_id() == "omnivoice-gguf"
+
+
+# Voice Studio - Mr.Huỳnh: these tests exercise the OmniVoice default path.
+pytestmark = pytest.mark.usefixtures("omnivoice_default")

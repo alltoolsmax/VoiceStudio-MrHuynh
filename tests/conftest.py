@@ -902,3 +902,12 @@ def symlink_or_skip():
             pytest.skip(f"symlinks unavailable in this environment: {exc}")
 
     return _make
+
+
+@pytest.fixture
+def omnivoice_default(monkeypatch):
+    """Voice Studio - Mr.Huỳnh defaults to VoxCPM2; OmniVoice-specific tests
+    pin the old default so they keep exercising the OmniVoice path."""
+    from services import tts_backend
+
+    monkeypatch.setattr(tts_backend, "DEFAULT_TTS_BACKEND", "omnivoice")

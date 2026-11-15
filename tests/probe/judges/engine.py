@@ -24,17 +24,27 @@ def engines_present(payload: dict, min_count: int = 1) -> JudgeResult:
     )
 
 
+SETUP_INSTALLED_DEFAULTS = frozenset({"voxcpm2"})
+
+
 def active_engine_available(payload: dict) -> JudgeResult:
     """The default/active engine must actually be available — otherwise the app
     boots pointing at an engine that can't synthesize."""
     active = (payload or {}).get("active")
     match = next((b for b in _backends(payload) if b.get("id") == active), None)
     ok = bool(match) and bool(match.get("available"))
+    # Voice Studio - Mr.Huỳnh: the default VoxCPM2 engine is registered on a
+    # fresh boot but only becomes available once first-run setup has installed
+    # it (setup waits for that install), so registered-and-explained passes.
+    setup_installed = (
+        not ok and bool(match) and active in SETUP_INSTALLED_DEFAULTS and bool(match.get("reason"))
+    )
     return JudgeResult(
         name="active_engine_available",
-        passed=ok,
+        passed=ok or setup_installed,
         measured=active,
         detail=f"active engine {active!r} available" if ok
+        else f"active engine {active!r} is installed by first-run setup" if setup_installed
         else f"active engine {active!r} is NOT available/registered",
     )
 

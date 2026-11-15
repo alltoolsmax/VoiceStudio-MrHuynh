@@ -280,3 +280,7 @@ def test_the_fallback_detail_does_not_leak_a_path(mm, monkeypatch):
     assert secret not in error
     assert "somebody" not in error
     assert "Logs" in error
+
+
+# Voice Studio - Mr.Huỳnh: these tests exercise the OmniVoice default path.
+pytestmark = pytest.mark.usefixtures("omnivoice_default")
