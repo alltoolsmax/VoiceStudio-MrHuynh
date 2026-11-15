@@ -9,7 +9,7 @@ export const ZALO_URL = 'https://zalo.me/0979007367';
 
 // Giấy phép AGPL-3.0 yêu cầu cung cấp mã nguồn cho người dùng. Đổi link này
 // thành repo GitHub công khai chứa bản đã sửa của bạn.
-export const SOURCE_CODE_URL = 'https://github.com/debpalash/VoiceStudio';
+export const SOURCE_CODE_URL = 'https://github.com/alltoolsmax/VoiceStudio-MrHuynh';
 
 export const SUPPORT_CHANNELS = [
   { id: 'facebook', label: 'Facebook', href: FACEBOOK_URL },
