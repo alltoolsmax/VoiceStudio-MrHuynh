@@ -343,7 +343,7 @@ it('explains unsupported Windows proxy bypass rules before retrying setup', () =
   );
 });
 
-const LATEST_RELEASE_URL = 'https://mrhuynh.net';
+const LATEST_RELEASE_URL = 'https://active.mrhuynh.net/downloads/';
 
 it('sends Apple Silicon users running the Intel build to the arm64 download (#2598)', () => {
   backendStatus.setupIssue = 'wrong_architecture';

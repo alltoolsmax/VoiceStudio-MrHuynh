@@ -202,3 +202,6 @@ backend/assets/samples/demo/dubbing/*.src.wav
 
 # Per-user Visual Studio Code workspace settings.
 /.vscode/settings.json
+
+# Bộ cài do scripts/build-windows-mrhuynh.ps1 tạo, để upload lên hosting
+/upload/

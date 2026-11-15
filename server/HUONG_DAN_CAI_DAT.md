@@ -32,7 +32,9 @@ Sau khi giải nén, bạn sẽ có:
     ├── voice_studio2_webhook.php      ← MỚI
     ├── voice_studio2_admin.php        ← MỚI
     ├── voice_studio2_check.php        ← MỚI (xóa sau khi cài xong)
-    └── voice_studio2_bootstrap.php    ← MỚI
+    ├── voice_studio2_bootstrap.php    ← MỚI
+    └── downloads/
+        └── index.php                  ← MỚI: trang tải cho khách, tự hiện bản mới nhất
 ```
 
 Các file của máy chủ Voice AI hiện có **không bị đụng tới** vì tên khác hoàn toàn.
@@ -96,6 +98,13 @@ Trong trang quản trị có nút **"Thử Telegram"** để kiểm tra.
 - **Cấp key tay** ngay trên web (chọn gói; để trống ngày bắt đầu thì tự cộng dồn theo các đơn đã có).
 - Đơn **thiếu tiền / lỗi**: nút "Cấp key cho đơn này" sau khi bạn đã kiểm tra.
 - **Giao dịch cần xem**: tiền vào không khớp đơn nào, chuyển thiếu, chuyển trùng.
+
+- **Phát hành & cập nhật**: xem bản mới nhất đang có trong `downloads/`, và bật
+  **bắt buộc cập nhật** (nhập phiên bản tối thiểu, ví dụ `1.0.1`, kèm lời nhắn). Khách dùng bản
+  thấp hơn sẽ thấy màn hình "Cần cập nhật để tiếp tục" cho đến khi cài bản mới. Để trống = tắt.
+  Khi khách mất mạng, app không bị chặn.
+
+Cách phát hành bản mới: xem `HUONG_DAN_BUILD_VA_CAP_NHAT.md` trong thư mục mã nguồn.
 
 App cấp key trên Windows (VSMH-KeyGen.exe) vẫn dùng song song được: key từ hai nơi
 có cùng chuẩn, app Voice Studio đều nhận.

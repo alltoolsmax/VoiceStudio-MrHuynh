@@ -20,7 +20,10 @@ const { autoUpdater, CancellationToken } = updaterPackage;
 // `latest/download` never serves a prerelease, so Beta resolves its release
 // through the releases API (see resolveBetaFeed).
 export type UpdateChannel = 'stable' | 'beta';
-const STABLE_FEED = 'https://github.com/debpalash/VoiceStudio/releases/latest/download';
+// Voice Studio - Mr.Huỳnh: bản cập nhật nằm trên hosting của Mr.Huỳnh. Upload 3 file
+// do script build tạo ra (…-win-x64.exe, .exe.blockmap, electron-stable-win32-x64.yml)
+// vào thư mục này là app của khách tự thấy bản mới.
+export const STABLE_FEED = 'https://active.mrhuynh.net/downloads';
 const RELEASES_API = 'https://api.github.com/repos/debpalash/VoiceStudio/releases?per_page=30';
 const LATEST_RELEASE_API = 'https://api.github.com/repos/debpalash/VoiceStudio/releases/latest';
 const GITHUB_API_HEADERS = {
@@ -481,7 +484,8 @@ export class DesktopUpdater {
     const supported = this.updatesSupported();
     // Store builds are stable-only, so they expose no channel to switch. A dev
     // run cannot update itself but still shows and saves the channel.
-    const selectable = (supported || !app.isPackaged) && distribution !== 'microsoft-store';
+    // Voice Studio - Mr.Huỳnh chỉ có một kênh cập nhật (không có Beta).
+    const selectable = false;
     if (selectable) this.channel = readSavedUpdateChannel();
     this.state = {
       status: supported ? 'idle' : 'unsupported',
@@ -805,11 +809,9 @@ export class DesktopUpdater {
    * the asset route is never used when the normal feed works.
    */
   private canUseAssetRoute(error: unknown): boolean {
-    return (
-      this.distribution !== 'microsoft-store' &&
-      this.feed?.viaApi !== true &&
-      isTransientUpdateError(error)
-    );
+    // Không có đường tải dự phòng qua GitHub: mọi bản cập nhật lấy từ STABLE_FEED.
+    void error;
+    return false;
   }
 
   /** The feed's release with asset ids; Stable spends its one API request here. */
@@ -1102,7 +1104,8 @@ export function registerUpdateIpc(
   });
   ipcMain.handle(UPDATE_CHANNELS.listReleases, (event) => {
     trusted(event);
-    return listDesktopReleases();
+    // Danh sách bản phát hành của VoiceStudio gốc (GitHub) không áp dụng cho bản này.
+    return [];
   });
   const unsubscribe = updater.subscribe((state) => {
     sendToLiveWindow(getMainWindow(), UPDATE_CHANNELS.state, state);

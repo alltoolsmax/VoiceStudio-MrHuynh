@@ -166,3 +166,66 @@ export async function checkOrder(
     return { ok: false, error: 'offline' };
   }
 }
+
+// ── bắt buộc cập nhật (đặt ở trang quản trị → Phát hành) ─────────────────────
+
+export const DOWNLOAD_PAGE_URL = 'https://active.mrhuynh.net/downloads/';
+
+export interface UpdatePolicy {
+  /** true khi bản đang chạy thấp hơn phiên bản tối thiểu: phải cập nhật mới dùng tiếp. */
+  required: boolean;
+  minVersion: string | null;
+  latestVersion: string | null;
+  message: string;
+  downloadUrl: string;
+}
+
+const SEMVER = /^(\d+)\.(\d+)\.(\d+)/;
+
+/** So sánh a với b theo major.minor.patch: âm khi a cũ hơn. */
+export function compareVersions(a: string, b: string): number {
+  const pa = SEMVER.exec(a);
+  const pb = SEMVER.exec(b);
+  if (!pa || !pb) return 0;
+  for (let i = 1; i <= 3; i += 1) {
+    const diff = Number(pa[i]) - Number(pb[i]);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
+/** Không kết nối được thì không chặn: khách vẫn dùng bình thường khi mất mạng. */
+export async function fetchUpdatePolicy(
+  currentVersion: string,
+  fetchImpl: Fetch = fetch,
+): Promise<UpdatePolicy> {
+  const none: UpdatePolicy = {
+    required: false,
+    minVersion: null,
+    latestVersion: null,
+    message: '',
+    downloadUrl: DOWNLOAD_PAGE_URL,
+  };
+  try {
+    const { status, body } = await getJson(fetchImpl, `${LICENSE_SERVER_URL}?action=update_policy`);
+    if (status !== 200 || body.ok !== true) return none;
+    const minVersion =
+      typeof body.min_version === 'string' && SEMVER.test(body.min_version)
+        ? body.min_version
+        : null;
+    const latestVersion =
+      typeof body.latest_version === 'string' && SEMVER.test(body.latest_version)
+        ? body.latest_version
+        : null;
+    return {
+      required: minVersion !== null && compareVersions(currentVersion, minVersion) < 0,
+      minVersion,
+      latestVersion,
+      message: typeof body.message === 'string' ? body.message.slice(0, 500) : '',
+      // Chỉ mở trang tải của chính máy chủ, không theo link lạ.
+      downloadUrl: DOWNLOAD_PAGE_URL,
+    };
+  } catch {
+    return none;
+  }
+}

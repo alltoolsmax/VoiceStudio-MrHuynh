@@ -62,8 +62,10 @@ def server(tmp_path):
         "VS2_TELEGRAM_OUTBOX": str(outbox),
         "VS2_FAKE_NOW": TODAY,
     }
+    docroot = tmp_path / "active.mrhuynh.net"
+    shutil.copytree(ROOT / "server" / "active.mrhuynh.net", docroot)
     proc = subprocess.Popen(
-        ["php", "-S", f"127.0.0.1:{port}", "-t", str(ROOT / "server" / "active.mrhuynh.net")],
+        ["php", "-S", f"127.0.0.1:{port}", "-t", str(docroot)],
         env=env,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
@@ -78,6 +80,7 @@ def server(tmp_path):
 
     class Server:
         url = base
+        downloads = docroot / "downloads"
 
         def call(self, path, body=None, headers=None, method=None):
             data = json.dumps(body).encode() if isinstance(body, dict) else body
@@ -287,3 +290,48 @@ def test_private_folder_is_not_served(server):
     assert (ROOT / "server" / "active_private" / "voice_studio2" / ".htaccess").is_file()
     with pytest.raises(urllib.error.HTTPError):
         urllib.request.urlopen(server.url + "/active_private/voice_studio2/config.php")
+
+
+RELEASE_YML = """version: 1.0.1
+files:
+  - url: VoiceStudio-MrHuynh-1.0.1-win-x64.exe
+    sha512: abc
+    size: 3
+path: VoiceStudio-MrHuynh-1.0.1-win-x64.exe
+sha512: abc
+releaseDate: '2026-11-16T10:00:00.000Z'
+releaseNotes: |-
+  Sửa lỗi lồng tiếng
+  Gói mua dễ nhìn hơn
+"""
+
+
+def test_release_page_and_mandatory_update(server):
+    # Chưa upload gì: trang tải báo đang cập nhật, không bắt buộc cập nhật.
+    page = urllib.request.urlopen(server.url + "/downloads/").read().decode()
+    assert "đang được cập nhật" in page
+    assert server.call("/voice_studio2_api.php?action=update_policy")[1]["min_version"] == ""
+
+    (server.downloads / "electron-stable-win32-x64.yml").write_text(RELEASE_YML, encoding="utf-8")
+    (server.downloads / "VoiceStudio-MrHuynh-1.0.1-win-x64.exe").write_bytes(b"exe")
+    page = urllib.request.urlopen(server.url + "/downloads/").read().decode()
+    assert 'href="VoiceStudio-MrHuynh-1.0.1-win-x64.exe"' in page
+    assert "Gói mua dễ nhìn hơn" in page
+
+    jar = http.cookiejar.CookieJar()
+    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
+    url = server.url + "/voice_studio2_admin.php"
+    opener.open(urllib.request.Request(url, data=b"password=mat-khau-thu-123")).read()
+    page = opener.open(url).read().decode()
+    assert "<b>1.0.1</b>" in page
+    csrf = re.search(r'name="csrf" value="([0-9a-f]+)"', page).group(1)
+    form = {"csrf": csrf, "action": "update_policy", "min_version": "1.0.1", "message": "Cập nhật ngay"}
+    opener.open(urllib.request.Request(url, data=urllib.parse.urlencode(form).encode())).read()
+    status, data = server.call("/voice_studio2_api.php?action=update_policy")
+    assert status == 200
+    assert (data["min_version"], data["message"], data["latest_version"]) == ("1.0.1", "Cập nhật ngay", "1.0.1")
+
+    # Phiên bản sai dạng thì không lưu.
+    form.update(min_version="1.0")
+    page = opener.open(urllib.request.Request(url, data=urllib.parse.urlencode(form).encode())).read().decode()
+    assert "1.0.1" in server.call("/voice_studio2_api.php?action=update_policy")[1]["min_version"]

@@ -1252,7 +1252,7 @@
     "updater_desktop": "يعمل التحديث فقط في تطبيق سطح المكتب.",
     "updater_development": "التحديثات غير متاحة في إصدارات التطوير.",
     "updater_package_manager": "تأتي التحديثات من مدير الحزم لديك.",
-    "updater_no_config": "This build does not update itself. Download new versions from mrhuynh.net.",
+    "updater_no_config": "This build cannot update itself. Download new versions from active.mrhuynh.net/downloads.",
     "updater_store": "تأتي التحديثات من متجر التطبيقات.",
     "mcp_title": "ارتباطات صوت MCP",
     "mcp_desc": "امنح كل وكيل MCP صوتًا خاصًا بربط معرّف العميل بملف صوتي.",
@@ -2486,7 +2486,7 @@
   "reportBug": {
     "native_fault_cause": "عطل أصلي: تعطلت العملية في طبقة أدنى من Python، لذلك لا يتوفر تتبع استثناء Python.",
     "label": "الإبلاغ عن خطأ",
-    "title": "يفتح صفحة مشكلات GitHub المملوءة مسبقًا في متصفحك. لا يتم إرسال أي شيء حتى تقوم بالنقر فوق إرسال.",
+    "title": "Copies a bug report and opens the Zalo support group: just paste (Ctrl+V) and send. Nothing is sent automatically.",
     "staleTitle": "يتوفر تحديث",
     "staleMessage": "أنت تستخدم Voice Studio - Mr.Huỳnh {{current}}، لكن الإصدار {{latest}} متوفر بالفعل — قد يكون هذا الخطأ مُصلحًا فيه. هل تريد الاطلاع على أحدث إصدار قبل الإبلاغ؟",
     "staleView": "عرض التحديث",
@@ -2503,8 +2503,8 @@
     "save_diagnostics": "حفظ التشخيص الكامل لإرفاقه",
     "save_diagnostics_failed": "تعذر حفظ بيانات التشخيص. جرّب مجلدًا آخر أو أرسل البلاغ بدونها.",
     "sent_pages": "أسماء الصفحات التي زرتها مؤخرًا",
-    "not_sent": "لا يتم إرسال الصوت أو النصوص أو الأصوات أبدًا. قد تظهر أسماء الملفات في السجلات أو في وصفك، لذا راجع معاينة GitHub قبل الإرسال.",
-    "submit": "فتح مشكلة على GitHub"
+    "not_sent": "Never sent: your audio, text or voices. File names may appear in logs or your description, so review the report before pasting it.",
+    "submit": "Copy report and open Zalo group"
   },
   "crash": {
     "uptime_value": "{{count}} s",
@@ -4423,6 +4423,22 @@
     "licensed_until": "{{plan}} plan, valid through {{date}}",
     "licensed_permanent": "Lifetime license",
     "renew_badge": "{{days}} days left · Renew",
-    "license_section": "License"
+    "license_section": "License",
+    "update_required_title": "Update required to continue",
+    "update_required_versions": "You are on {{current}}; version {{min}} or later is required.",
+    "update_required_default": "A new version with important fixes is available. Please update to keep using the app. Your license and data are kept.",
+    "update_downloading": "Downloading the update… {{percent}}%",
+    "update_restart": "Restart to install",
+    "update_download": "Download update",
+    "update_working": "Checking for the update…",
+    "update_open_page": "Open download page",
+    "update_failed": "The automatic download failed. Click \"Open download page\" to download and install the new version.",
+    "badge_popular": "Popular",
+    "badge_best": "Best value",
+    "pay_once": "Pay once, use forever",
+    "per_month": "≈ {{price}}/month",
+    "save_percent": "Save {{percent}}%",
+    "order_plan": "Pay for the {{plan}} plan",
+    "content_warning": "Keep the transfer description unchanged (it is already in the QR code) so the app activates automatically."
   }
 }

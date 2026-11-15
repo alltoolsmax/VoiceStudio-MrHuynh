@@ -1226,7 +1226,7 @@
     "updater_desktop": "El actualizador solo se ejecuta en la aplicación de escritorio.",
     "updater_development": "Las actualizaciones no están disponibles en compilaciones de desarrollo.",
     "updater_package_manager": "Las actualizaciones llegan desde tu gestor de paquetes.",
-    "updater_no_config": "This build does not update itself. Download new versions from mrhuynh.net.",
+    "updater_no_config": "This build cannot update itself. Download new versions from active.mrhuynh.net/downloads.",
     "updater_store": "Las actualizaciones llegan desde la tienda de aplicaciones.",
     "mcp_title": "Asignaciones de voz MCP",
     "mcp_desc": "Da a cada agente MCP su propia voz vinculando su ID de cliente a un perfil de voz.",
@@ -2436,7 +2436,7 @@
   "reportBug": {
     "native_fault_cause": "Fallo nativo: el proceso falló por debajo de Python, por lo que no hay un rastreo de Python disponible.",
     "label": "Informar un error",
-    "title": "Abre una página de Problemas de GitHub precargada en su navegador. No se envía nada hasta que haga clic en Enviar.",
+    "title": "Copies a bug report and opens the Zalo support group: just paste (Ctrl+V) and send. Nothing is sent automatically.",
     "staleTitle": "Actualización disponible",
     "staleMessage": "Está usando Voice Studio - Mr.Huỳnh {{current}}, pero {{latest}} ya está disponible; puede que este error ya esté corregido. ¿Ver la última versión antes de informar?",
     "staleView": "Ver actualización",
@@ -2453,8 +2453,8 @@
     "save_diagnostics": "Guardar el diagnóstico completo para adjuntarlo",
     "save_diagnostics_failed": "No se pudo guardar el diagnóstico. Prueba otra carpeta o envía el informe sin él.",
     "sent_pages": "Nombres de las páginas visitadas recientemente",
-    "not_sent": "Nunca se envía: tu audio, texto o voces. Los nombres de archivo pueden aparecer en los registros o en tu descripción, así que revisa la vista previa de GitHub antes de enviar.",
-    "submit": "Abrir incidencia en GitHub"
+    "not_sent": "Never sent: your audio, text or voices. File names may appear in logs or your description, so review the report before pasting it.",
+    "submit": "Copy report and open Zalo group"
   },
   "crash": {
     "uptime_value": "{{count}} s",
@@ -4365,6 +4365,22 @@
     "licensed_until": "{{plan}} plan, valid through {{date}}",
     "licensed_permanent": "Lifetime license",
     "renew_badge": "{{days}} days left · Renew",
-    "license_section": "License"
+    "license_section": "License",
+    "update_required_title": "Update required to continue",
+    "update_required_versions": "You are on {{current}}; version {{min}} or later is required.",
+    "update_required_default": "A new version with important fixes is available. Please update to keep using the app. Your license and data are kept.",
+    "update_downloading": "Downloading the update… {{percent}}%",
+    "update_restart": "Restart to install",
+    "update_download": "Download update",
+    "update_working": "Checking for the update…",
+    "update_open_page": "Open download page",
+    "update_failed": "The automatic download failed. Click \"Open download page\" to download and install the new version.",
+    "badge_popular": "Popular",
+    "badge_best": "Best value",
+    "pay_once": "Pay once, use forever",
+    "per_month": "≈ {{price}}/month",
+    "save_percent": "Save {{percent}}%",
+    "order_plan": "Pay for the {{plan}} plan",
+    "content_warning": "Keep the transfer description unchanged (it is already in the QR code) so the app activates automatically."
   }
 }

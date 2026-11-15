@@ -50,7 +50,7 @@ export function updateErrorTitleKey(
   }
 }
 
-const RELEASES_PAGE = "https://mrhuynh.net";
+const RELEASES_PAGE = "https://active.mrhuynh.net/downloads/";
 
 /** The GitHub release page for a version, or the releases list when unknown. */
 export function updateReleaseUrl(version?: string): string {

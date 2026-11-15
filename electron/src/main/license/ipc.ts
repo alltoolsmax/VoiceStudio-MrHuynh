@@ -9,7 +9,7 @@ import {
   type LicenseDeps,
   type LicenseStatus,
 } from './index';
-import { checkOrder, createOrder, fetchPlans } from './store-client';
+import { checkOrder, createOrder, fetchPlans, fetchUpdatePolicy } from './store-client';
 
 /**
  * Bản chạy thử khi phát triển (chưa đóng gói) coi như đã kích hoạt, trừ khi đặt
@@ -81,6 +81,14 @@ export function registerLicenseIpc(
     const activation = activateLicense(deps, result.state.key);
     if (activation.ok) onActivated();
     return { ok: true, state: { status: 'paid' }, activation };
+  });
+  // Bắt buộc cập nhật: chỉ bản đóng gói mới bị chặn (bản dev luôn bỏ qua).
+  ipcMain.handle('license:update-policy', async (event) => {
+    assertTrustedMainFrame(event, getMainWindow());
+    if (!app.isPackaged && process.env.VSMH_LICENSE_DEV !== '1') {
+      return fetchUpdatePolicy('999.0.0');
+    }
+    return fetchUpdatePolicy(app.getVersion());
   });
   return { status, ready: () => ready };
 }

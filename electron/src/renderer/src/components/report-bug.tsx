@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { composeBugReportUrl } from '@shared/utils/bugReportDocument';
+import { ZALO_GROUP_URL } from '@shared/utils/contactLinks';
 import { formatBreadcrumbs } from '@shared/utils/breadcrumbs';
 import { contactAge, lastBackendContact } from '@shared/utils/backendContact';
 import { clampCrashTail } from '@shared/utils/crashReport';
@@ -314,8 +315,13 @@ export function ReportBug({
         reachabilitySection: reachabilitySection(error, backend, contactAtReport),
         breadcrumbs: formatBreadcrumbs(),
       });
-      if (bridge) await bridge.files.openExternal(url);
-      else if (popup && !popup.closed) popup.location.replace(url);
+      // Voice Studio - Mr.Huỳnh: báo lỗi qua nhóm Zalo hỗ trợ — chép sẵn nội dung
+      // báo cáo vào bộ nhớ tạm rồi mở nhóm Zalo để khách dán vào.
+      const report = new URL(url).searchParams;
+      const text = `${report.get('title') ?? ''}\n\n${report.get('body') ?? ''}`;
+      await navigator.clipboard?.writeText(text).catch(() => undefined);
+      if (bridge) await bridge.files.openExternal(ZALO_GROUP_URL);
+      else if (popup && !popup.closed) popup.location.replace(ZALO_GROUP_URL);
     } catch {
       popup?.close();
       setFailed(true);

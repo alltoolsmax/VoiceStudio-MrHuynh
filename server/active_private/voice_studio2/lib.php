@@ -427,6 +427,61 @@ function vs2_fulfil(array $order, int $paidAmount): array
     return $issued + ['plan' => $plan];
 }
 
+// ── phát hành và bắt buộc cập nhật ──────────────────────────────────────────
+
+function vs2_update_policy(): array
+{
+    $file = vs2_dir() . '/update_policy.json';
+    $data = is_file($file) ? json_decode((string) file_get_contents($file), true) : null;
+    return [
+        'min_version' => is_array($data) ? (string) ($data['min_version'] ?? '') : '',
+        'message' => is_array($data) ? (string) ($data['message'] ?? '') : '',
+    ];
+}
+
+function vs2_save_update_policy(string $minVersion, string $message): void
+{
+    $minVersion = trim($minVersion);
+    if ($minVersion !== '' && !preg_match('/^\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?$/', $minVersion)) {
+        throw new InvalidArgumentException('Phiên bản phải có dạng 1.0.1');
+    }
+    file_put_contents(
+        vs2_dir() . '/update_policy.json',
+        json_encode(['min_version' => $minVersion, 'message' => trim($message)], JSON_UNESCAPED_UNICODE),
+        LOCK_EX
+    );
+}
+
+/**
+ * Bản mới nhất đang có trong thư mục downloads (đọc file electron-stable-win32-x64.yml
+ * do script build tạo ra). Trả về null khi chưa upload.
+ */
+function vs2_latest_release(string $downloadsDir): ?array
+{
+    $file = $downloadsDir . '/electron-stable-win32-x64.yml';
+    if (!is_file($file)) {
+        return null;
+    }
+    $yml = (string) file_get_contents($file);
+    $field = function (string $name) use ($yml): string {
+        return preg_match('/^' . $name . ':\s*[\'"]?([^\'"\r\n]+)[\'"]?\s*$/m', $yml, $m) ? trim($m[1]) : '';
+    };
+    $notes = '';
+    if (preg_match('/^releaseNotes:\s*\|-?\s*\R((?:[ \t]+.*(?:\R|$))+)/m', $yml, $m)) {
+        $notes = trim(preg_replace('/^[ \t]{2}/m', '', $m[1]) ?? '');
+    } elseif ($inline = $field('releaseNotes')) {
+        $notes = $inline;
+    }
+    $path = basename($field('path'));
+    return [
+        'version' => $field('version'),
+        'file' => $path,
+        'date' => $field('releaseDate'),
+        'notes' => $notes,
+        'size' => is_file($downloadsDir . '/' . $path) ? filesize($downloadsDir . '/' . $path) : null,
+    ];
+}
+
 // ── Telegram ────────────────────────────────────────────────────────────────
 
 function vs2_h(?string $text): string

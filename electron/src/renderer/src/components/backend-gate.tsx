@@ -60,7 +60,7 @@ interface BackendGateProps {
   repairDock?: ReactNode;
 }
 
-const RELEASES_URL = 'https://mrhuynh.net';
+const RELEASES_URL = 'https://active.mrhuynh.net/downloads/';
 const RETRYABLE = new Set(['crashed', 'failed', 'port_in_use']);
 
 type SetupPanel = 'options' | 'troubleshoot';

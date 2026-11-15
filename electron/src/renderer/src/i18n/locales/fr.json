@@ -1226,7 +1226,7 @@
     "updater_desktop": "Le programme de mise à jour ne s'exécute que dans l'application de bureau.",
     "updater_development": "Les mises à jour ne sont pas disponibles dans les versions de développement.",
     "updater_package_manager": "Les mises à jour passent par votre gestionnaire de paquets.",
-    "updater_no_config": "This build does not update itself. Download new versions from mrhuynh.net.",
+    "updater_no_config": "This build cannot update itself. Download new versions from active.mrhuynh.net/downloads.",
     "updater_store": "Les mises à jour passent par la boutique d'applications.",
     "mcp_title": "Affectations vocales MCP",
     "mcp_desc": "Donnez une voix à chaque agent MCP en associant son identifiant client à un profil vocal.",
@@ -2436,7 +2436,7 @@
   "reportBug": {
     "native_fault_cause": "Erreur native : le processus a planté sous la couche Python, donc aucune trace Python n’est disponible.",
     "label": "Signaler un bug",
-    "title": "Ouvre une page de problèmes GitHub pré-remplie dans votre navigateur. Rien n'est envoyé jusqu'à ce que vous cliquiez sur Soumettre.",
+    "title": "Copies a bug report and opens the Zalo support group: just paste (Ctrl+V) and send. Nothing is sent automatically.",
     "staleTitle": "Mise à jour disponible",
     "staleMessage": "Vous utilisez Voice Studio - Mr.Huỳnh {{current}}, mais {{latest}} est déjà sortie — ce bug y est peut-être déjà corrigé. Voir la dernière version avant de signaler ?",
     "staleView": "Voir la mise à jour",
@@ -2453,8 +2453,8 @@
     "save_diagnostics": "Enregistrer le diagnostic complet à joindre",
     "save_diagnostics_failed": "Impossible d’enregistrer le diagnostic. Essayez un autre dossier ou envoyez le rapport sans lui.",
     "sent_pages": "Noms des pages visitées récemment",
-    "not_sent": "Jamais envoyés : votre audio, vos textes ou vos voix. Des noms de fichiers peuvent figurer dans les journaux ou votre description : relisez l’aperçu GitHub avant d’envoyer.",
-    "submit": "Ouvrir un ticket GitHub"
+    "not_sent": "Never sent: your audio, text or voices. File names may appear in logs or your description, so review the report before pasting it.",
+    "submit": "Copy report and open Zalo group"
   },
   "crash": {
     "uptime_value": "{{count}} s",
@@ -4365,6 +4365,22 @@
     "licensed_until": "{{plan}} plan, valid through {{date}}",
     "licensed_permanent": "Lifetime license",
     "renew_badge": "{{days}} days left · Renew",
-    "license_section": "License"
+    "license_section": "License",
+    "update_required_title": "Update required to continue",
+    "update_required_versions": "You are on {{current}}; version {{min}} or later is required.",
+    "update_required_default": "A new version with important fixes is available. Please update to keep using the app. Your license and data are kept.",
+    "update_downloading": "Downloading the update… {{percent}}%",
+    "update_restart": "Restart to install",
+    "update_download": "Download update",
+    "update_working": "Checking for the update…",
+    "update_open_page": "Open download page",
+    "update_failed": "The automatic download failed. Click \"Open download page\" to download and install the new version.",
+    "badge_popular": "Popular",
+    "badge_best": "Best value",
+    "pay_once": "Pay once, use forever",
+    "per_month": "≈ {{price}}/month",
+    "save_percent": "Save {{percent}}%",
+    "order_plan": "Pay for the {{plan}} plan",
+    "content_warning": "Keep the transfer description unchanged (it is already in the QR code) so the app activates automatically."
   }
 }

@@ -6,8 +6,6 @@ import {
   type DistributionTarget,
 } from '../../../config/distributions.mjs';
 
-const FORK_UPDATES_DISABLED = true;
-
 export const CURRENT_DISTRIBUTION = __DISTRIBUTION_TARGET__ as DistributionTarget;
 
 export function currentDistributionProfile(): DistributionProfile {
@@ -43,9 +41,6 @@ export function applicationUpdatesUnsupportedReason(
   hasUpdateConfig: boolean | (() => boolean) = updateConfigPresent,
 ): UpdateUnsupportedReason | null {
   if (!packaged) return 'development';
-  // Voice Studio - Mr.Huỳnh không tự cập nhật từ máy chủ của VoiceStudio gốc;
-  // bản mới được phát hành tại https://mrhuynh.net.
-  if (FORK_UPDATES_DISABLED) return 'no-update-config';
   if (DISTRIBUTION_PROFILES[target].applicationUpdates !== 'application') return 'store';
   if (disabledByEnvironment) return 'package-manager';
   if (!(typeof hasUpdateConfig === 'function' ? hasUpdateConfig() : hasUpdateConfig))

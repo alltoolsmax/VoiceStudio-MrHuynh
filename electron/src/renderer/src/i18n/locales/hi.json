@@ -1224,7 +1224,7 @@
     "updater_desktop": "अपडेटर केवल डेस्कटॉप ऐप में चलता है।",
     "updater_development": "डेवलपमेंट बिल्ड में अपडेट उपलब्ध नहीं हैं।",
     "updater_package_manager": "अपडेट आपके पैकेज मैनेजर से आते हैं।",
-    "updater_no_config": "This build does not update itself. Download new versions from mrhuynh.net.",
+    "updater_no_config": "This build cannot update itself. Download new versions from active.mrhuynh.net/downloads.",
     "updater_store": "अपडेट ऐप स्टोर से आते हैं।",
     "mcp_title": "MCP वॉइस बाइंडिंग",
     "mcp_desc": "हर MCP एजेंट की क्लाइंट ID को वॉइस प्रोफ़ाइल से जोड़कर उसे अपनी आवाज़ दें।",
@@ -2434,7 +2434,7 @@
   "reportBug": {
     "native_fault_cause": "नेटिव त्रुटि: प्रक्रिया Python से निचले स्तर पर विफल हुई, इसलिए Python ट्रेसबैक उपलब्ध नहीं है।",
     "label": "बग की रिपोर्ट करें",
-    "title": "आपके ब्राउज़र में पहले से भरा हुआ GitHub इश्यूज़ पेज खोलता है। जब तक आप सबमिट पर क्लिक नहीं करते तब तक कुछ भी नहीं भेजा जाता है।",
+    "title": "Copies a bug report and opens the Zalo support group: just paste (Ctrl+V) and send. Nothing is sent automatically.",
     "staleTitle": "अपडेट उपलब्ध है",
     "staleMessage": "आप Voice Studio - Mr.Huỳnh {{current}} चला रहे हैं, लेकिन {{latest}} पहले ही आ चुका है — हो सकता है यह बग वहाँ ठीक हो चुका हो। रिपोर्ट करने से पहले नवीनतम रिलीज़ देखें?",
     "staleView": "अपडेट देखें",
@@ -2451,8 +2451,8 @@
     "save_diagnostics": "जोड़ने के लिए पूरे डायग्नोस्टिक्स सहेजें",
     "save_diagnostics_failed": "डायग्नोस्टिक्स सहेजे नहीं जा सके। कोई दूसरा फ़ोल्डर आज़माएँ या उनके बिना रिपोर्ट भेजें।",
     "sent_pages": "हाल ही में देखे गए पेजों के नाम",
-    "not_sent": "आपका ऑडियो, टेक्स्ट या आवाज़ें कभी नहीं भेजी जातीं। फ़ाइल नाम लॉग या आपके विवरण में दिख सकते हैं, इसलिए सबमिट करने से पहले GitHub प्रीव्यू जाँच लें।",
-    "submit": "GitHub इश्यू खोलें"
+    "not_sent": "Never sent: your audio, text or voices. File names may appear in logs or your description, so review the report before pasting it.",
+    "submit": "Copy report and open Zalo group"
   },
   "crash": {
     "uptime_value": "{{count}} s",
@@ -4363,6 +4363,22 @@
     "licensed_until": "{{plan}} plan, valid through {{date}}",
     "licensed_permanent": "Lifetime license",
     "renew_badge": "{{days}} days left · Renew",
-    "license_section": "License"
+    "license_section": "License",
+    "update_required_title": "Update required to continue",
+    "update_required_versions": "You are on {{current}}; version {{min}} or later is required.",
+    "update_required_default": "A new version with important fixes is available. Please update to keep using the app. Your license and data are kept.",
+    "update_downloading": "Downloading the update… {{percent}}%",
+    "update_restart": "Restart to install",
+    "update_download": "Download update",
+    "update_working": "Checking for the update…",
+    "update_open_page": "Open download page",
+    "update_failed": "The automatic download failed. Click \"Open download page\" to download and install the new version.",
+    "badge_popular": "Popular",
+    "badge_best": "Best value",
+    "pay_once": "Pay once, use forever",
+    "per_month": "≈ {{price}}/month",
+    "save_percent": "Save {{percent}}%",
+    "order_plan": "Pay for the {{plan}} plan",
+    "content_warning": "Keep the transfer description unchanged (it is already in the QR code) so the app activates automatically."
   }
 }

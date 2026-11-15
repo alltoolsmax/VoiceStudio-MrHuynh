@@ -7,9 +7,9 @@ export const WEBSITE_URL = 'https://mrhuynh.net';
 export const ZALO_GROUP_URL = 'https://zalo.me/g/lzcnxj126';
 export const ZALO_URL = 'https://zalo.me/0979007367';
 
-// Giấy phép AGPL-3.0 yêu cầu cung cấp mã nguồn cho người dùng. Đổi link này
-// thành repo GitHub công khai chứa bản đã sửa của bạn.
-export const SOURCE_CODE_URL = 'https://github.com/alltoolsmax/VoiceStudio-MrHuynh';
+// Giấy phép AGPL-3.0 yêu cầu cung cấp mã nguồn cho người dùng: script build tạo
+// file này, upload cùng bộ cài vào active.mrhuynh.net/downloads/.
+export const SOURCE_CODE_URL = 'https://active.mrhuynh.net/downloads/voice-studio-source.zip';
 
 export const SUPPORT_CHANNELS = [
   { id: 'facebook', label: 'Facebook', href: FACEBOOK_URL },

@@ -4,6 +4,7 @@
  *   GET  ?action=plans                          bảng giá và tài khoản nhận tiền
  *   POST ?action=create_order  {machine_code, plan, current_key?}
  *   GET  ?action=order&code=ACT...&machine_code=VSMH-...
+ *   GET  ?action=update_policy                  phiên bản tối thiểu bắt buộc (trang quản trị)
  */
 declare(strict_types=1);
 require __DIR__ . '/voice_studio2_bootstrap.php';
@@ -22,6 +23,18 @@ try {
             ];
         }
         vs2_json(['ok' => true, 'plans' => $plans]);
+    }
+
+    if ($action === 'update_policy') {
+        $policy = vs2_update_policy();
+        $latest = vs2_latest_release(__DIR__ . '/downloads');
+        vs2_json([
+            'ok' => true,
+            'min_version' => $policy['min_version'],
+            'message' => $policy['message'],
+            'latest_version' => $latest['version'] ?? null,
+            'download_url' => 'https://active.mrhuynh.net/downloads/',
+        ]);
     }
 
     if ($action === 'create_order') {

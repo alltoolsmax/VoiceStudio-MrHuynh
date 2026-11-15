@@ -52,7 +52,8 @@ if (
 ) {
   throw new Error(`Unsupported Electron update channel: ${updateChannel}`);
 }
-const updateUrl = 'https://github.com/debpalash/VoiceStudio/releases/latest/download';
+// Voice Studio - Mr.Huỳnh: bản cập nhật nằm trên hosting (khớp STABLE_FEED trong updater.ts).
+const updateUrl = 'https://active.mrhuynh.net/downloads';
 
 export function distributionPackaging(target = DISTRIBUTION_TARGET) {
   if (target === 'snap-store') {
@@ -312,4 +313,9 @@ export default {
   },
   ...(packaging.snapcraft ? { snapcraft: packaging.snapcraft } : {}),
   publish: packaging.publish,
+  // Voice Studio - Mr.Huỳnh: "Có gì mới" hiện trong app khi cập nhật và trên
+  // trang tải; script build-windows-mrhuynh.ps1 truyền file ghi chú qua biến này.
+  ...(process.env.VSMH_RELEASE_NOTES_FILE
+    ? { releaseInfo: { releaseNotesFile: process.env.VSMH_RELEASE_NOTES_FILE } }
+    : {}),
 };

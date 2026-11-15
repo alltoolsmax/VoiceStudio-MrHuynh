@@ -483,6 +483,14 @@ export type LicenseOrderCheck =
   | { ok: true; state: { status: 'pending' | 'underpaid' | 'error'; paidAmount: number } }
   | { ok: true; state: { status: 'paid' }; activation: LicenseActivateResult };
 
+export interface LicenseUpdatePolicy {
+  required: boolean;
+  minVersion: string | null;
+  latestVersion: string | null;
+  message: string;
+  downloadUrl: string;
+}
+
 export interface VoiceStudioBridge {
   /** Bản quyền Voice Studio - Mr.Huỳnh: dùng thử 24 giờ, key vĩnh viễn theo mã máy. */
   license?: {
@@ -495,6 +503,8 @@ export interface VoiceStudioBridge {
       plan: string,
     ): Promise<{ ok: true; order: LicenseStoreOrder } | { ok: false; error: LicenseStoreError }>;
     checkOrder(code: string): Promise<LicenseOrderCheck>;
+    /** Bắt buộc cập nhật do trang quản trị đặt; không chặn khi mất mạng. */
+    updatePolicy(): Promise<LicenseUpdatePolicy>;
   };
   /** VoiceStudio Cloud account; never carries a token. */
   account: {

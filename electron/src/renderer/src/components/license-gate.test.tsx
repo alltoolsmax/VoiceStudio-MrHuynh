@@ -184,3 +184,34 @@ test('the expired screen names the plan that ended', async () => {
     'activation.plan_month3',
   );
 });
+
+test('all plans sit in one row with their own colour, and only three contacts show', async () => {
+  license.status.mockResolvedValue({
+    state: 'expired',
+    machineCode: MACHINE,
+    reason: 'trial_ended',
+  });
+  license.plans.mockResolvedValue({
+    ok: true,
+    plans: [
+      { id: 'month1', label: '1 tháng', price: 55000 },
+      { id: 'month3', label: '3 tháng', price: 150000 },
+      { id: 'year1', label: '1 năm', price: 500000 },
+      { id: 'permanent', label: 'Vĩnh viễn', price: 1000000 },
+    ],
+  });
+  const { container } = render(<LicenseGate>app</LicenseGate>);
+  await screen.findByText('activation.plan_permanent');
+  const cards = container.querySelectorAll('[data-plan]');
+  expect(cards).toHaveLength(4);
+  expect((cards[0]!.parentElement as HTMLElement).style.gridTemplateColumns).toBe(
+    'repeat(4, minmax(0, 1fr))',
+  );
+  expect(cards[0]!.className).toContain('sky');
+  expect(cards[3]!.className).toContain('amber');
+  // 3 tháng 150.000đ so với 3 × 55.000đ: tiết kiệm 9%; 1 năm: 24%.
+  expect(screen.getByText('activation.save_percent {"percent":9}')).toBeInTheDocument();
+  expect(screen.getByText('activation.save_percent {"percent":24}')).toBeInTheDocument();
+  const links = screen.getAllByRole('link').map((a) => a.textContent);
+  expect(links).toEqual(['Facebook', 'Website', 'Zalo']);
+});

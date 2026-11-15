@@ -1224,7 +1224,7 @@
     "updater_desktop": "Trình cập nhật chỉ chạy trong ứng dụng dành cho máy tính để bàn.",
     "updater_development": "Bản cập nhật không có trong bản dựng phát triển.",
     "updater_package_manager": "Bản cập nhật đến từ trình quản lý gói của bạn.",
-    "updater_no_config": "Bản này không tự cập nhật. Tải phiên bản mới tại mrhuynh.net.",
+    "updater_no_config": "Bản này không tự cập nhật được. Tải bản mới tại active.mrhuynh.net/downloads.",
     "updater_store": "Bản cập nhật đến từ cửa hàng ứng dụng.",
     "mcp_title": "Liên kết giọng nói MCP",
     "mcp_desc": "Cấp cho mỗi tác nhân MCP một giọng riêng bằng cách liên kết ID máy khách với hồ sơ giọng nói.",
@@ -2434,7 +2434,7 @@
   "reportBug": {
     "native_fault_cause": "Lỗi mã gốc: tiến trình gặp lỗi ở tầng bên dưới Python nên không có thông tin truy vết Python.",
     "label": "Báo cáo lỗi",
-    "title": "Mở trang Vấn đề GitHub được điền sẵn trong trình duyệt của bạn. Không có gì được gửi cho đến khi bạn nhấp vào Gửi.",
+    "title": "Chép sẵn báo cáo lỗi rồi mở nhóm Zalo hỗ trợ: bạn chỉ cần dán (Ctrl+V) và gửi. Không có gì được gửi đi tự động.",
     "staleTitle": "Có bản cập nhật",
     "staleMessage": "Bạn đang dùng Voice Studio - Mr.Huỳnh {{current}}, nhưng {{latest}} đã ra mắt — lỗi này có thể đã được sửa ở đó. Xem bản phát hành mới nhất trước khi báo cáo?",
     "staleView": "Xem bản cập nhật",
@@ -2451,8 +2451,8 @@
     "save_diagnostics": "Lưu toàn bộ chẩn đoán để đính kèm",
     "save_diagnostics_failed": "Không thể lưu chẩn đoán. Hãy thử thư mục khác hoặc gửi báo cáo mà không kèm chẩn đoán.",
     "sent_pages": "Tên các trang đã xem gần đây",
-    "not_sent": "Không bao giờ gửi: âm thanh, văn bản hoặc giọng nói của bạn. Tên tệp có thể xuất hiện trong nhật ký hoặc mô tả của bạn, vì vậy hãy xem lại bản xem trước trên GitHub trước khi gửi.",
-    "submit": "Mở issue trên GitHub"
+    "not_sent": "Không bao giờ gửi: âm thanh, văn bản hoặc giọng nói của bạn. Tên tệp có thể xuất hiện trong nhật ký hoặc mô tả, hãy xem lại trước khi dán vào Zalo.",
+    "submit": "Chép báo cáo và mở nhóm Zalo"
   },
   "crash": {
     "uptime_value": "{{count}} s",
@@ -4363,6 +4363,22 @@
     "licensed_until": "Gói {{plan}}, dùng đến hết ngày {{date}}",
     "licensed_permanent": "Bản quyền vĩnh viễn",
     "renew_badge": "Còn {{days}} ngày · Gia hạn",
-    "license_section": "Bản quyền"
+    "license_section": "Bản quyền",
+    "update_required_title": "Cần cập nhật để tiếp tục",
+    "update_required_versions": "Bạn đang dùng bản {{current}}, cần bản {{min}} trở lên.",
+    "update_required_default": "Đã có bản mới với các sửa lỗi quan trọng. Vui lòng cập nhật để tiếp tục sử dụng. Bản quyền và dữ liệu của bạn được giữ nguyên.",
+    "update_downloading": "Đang tải bản mới… {{percent}}%",
+    "update_restart": "Khởi động lại để cài",
+    "update_download": "Tải bản mới",
+    "update_working": "Đang kiểm tra bản mới…",
+    "update_open_page": "Mở trang tải",
+    "update_failed": "Không tải được tự động. Bấm \"Mở trang tải\" để tải và cài bản mới.",
+    "badge_popular": "Phổ biến",
+    "badge_best": "Tốt nhất",
+    "pay_once": "Trả 1 lần, dùng mãi mãi",
+    "per_month": "≈ {{price}}/tháng",
+    "save_percent": "Tiết kiệm {{percent}}%",
+    "order_plan": "Thanh toán gói {{plan}}",
+    "content_warning": "Giữ nguyên nội dung chuyển khoản (đã có sẵn trong mã QR) để được kích hoạt tự động."
   }
 }

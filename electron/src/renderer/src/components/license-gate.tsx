@@ -9,6 +9,7 @@ import {
   QrCodeIcon,
 } from 'lucide-react';
 import { getBridge } from '@/components/bridge';
+import { MandatoryUpdateGate } from '@/components/mandatory-update';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -63,6 +64,49 @@ export function daysLeft(expiresAt: string, now = Date.now()) {
 
 function formatMoney(amount: number) {
   return `${new Intl.NumberFormat('vi-VN').format(amount)}đ`;
+}
+
+/** Mỗi gói một màu riêng để khách nhận ra ngay, cả ở bảng giá lẫn màn hình QR. */
+const PLAN_THEME: Record<string, { card: string; band: string; price: string; button: string }> = {
+  month1: {
+    card: 'border-sky-500/50 hover:border-sky-500',
+    band: 'bg-sky-500',
+    price: 'text-sky-600 dark:text-sky-400',
+    button: 'bg-sky-600 hover:bg-sky-700',
+  },
+  month3: {
+    card: 'border-emerald-500/50 hover:border-emerald-500',
+    band: 'bg-emerald-500',
+    price: 'text-emerald-600 dark:text-emerald-400',
+    button: 'bg-emerald-600 hover:bg-emerald-700',
+  },
+  year1: {
+    card: 'border-violet-500/60 hover:border-violet-500 ring-2 ring-violet-500/30',
+    band: 'bg-violet-600',
+    price: 'text-violet-600 dark:text-violet-400',
+    button: 'bg-violet-600 hover:bg-violet-700',
+  },
+  permanent: {
+    card: 'border-amber-500/60 hover:border-amber-500',
+    band: 'bg-gradient-to-r from-amber-500 to-orange-500',
+    price: 'text-amber-600 dark:text-amber-400',
+    button:
+      'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600',
+  },
+  test: {
+    card: 'border-slate-400/50 hover:border-slate-500',
+    band: 'bg-slate-500',
+    price: 'text-slate-600 dark:text-slate-300',
+    button: 'bg-slate-600 hover:bg-slate-700',
+  },
+};
+const PLAN_MONTHS: Record<string, number> = { month1: 1, month3: 3, year1: 12 };
+const PLAN_BADGE: Record<string, string> = { year1: 'badge_popular', permanent: 'badge_best' };
+/** Kênh liên hệ trong cửa sổ mua: chỉ Zalo, Facebook và Website. */
+const PAYMENT_CONTACTS = ['zalo', 'facebook', 'website'];
+
+export function planTheme(plan: string) {
+  return PLAN_THEME[plan] ?? PLAN_THEME.test!;
 }
 
 /** Hạn trong key là 00:00 UTC của ngày hết hạn; hiện ngày cuối cùng còn dùng được. */
@@ -180,15 +224,97 @@ function KeyEntry({ onStatus }: { onStatus: OnStatus }) {
   );
 }
 
-function PaymentRow({ label, value, copy }: { label: string; value: string; copy?: boolean }) {
+function PaymentRow({
+  label,
+  value,
+  copy,
+  strong,
+}: {
+  label: string;
+  value: string;
+  copy?: boolean;
+  strong?: string;
+}) {
   return (
-    <div className="flex items-center justify-between gap-2 border-b py-1.5 text-sm last:border-0">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="flex items-center gap-2 text-right font-medium">
-        {value}
+    <div className="flex min-h-11 items-center justify-between gap-3 border-b py-2 last:border-0">
+      <span className="shrink-0 text-sm text-muted-foreground">{label}</span>
+      <span className="flex min-w-0 items-center gap-2 text-right">
+        <span
+          className={`break-all font-semibold ${strong ?? 'text-base'}`}
+          data-testid={`pay-${label}`}
+        >
+          {value}
+        </span>
         {copy && <CopyButton value={value} label={label} />}
       </span>
     </div>
+  );
+}
+
+function PlanCard({
+  plan,
+  monthPrice,
+  busy,
+  disabled,
+  onBuy,
+}: {
+  plan: LicenseStorePlan;
+  monthPrice: number | null;
+  busy: boolean;
+  disabled: boolean;
+  onBuy: () => void;
+}) {
+  const { t } = useTranslation();
+  const theme = planTheme(plan.id);
+  const months = PLAN_MONTHS[plan.id];
+  const perMonth = months ? Math.round(plan.price / months) : null;
+  const saving =
+    months && months > 1 && monthPrice
+      ? Math.round((1 - plan.price / (monthPrice * months)) * 100)
+      : 0;
+  const badge = PLAN_BADGE[plan.id];
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onBuy}
+      data-plan={plan.id}
+      className={`group relative flex flex-col overflow-hidden rounded-xl border-2 bg-card text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md disabled:pointer-events-none disabled:opacity-60 ${theme.card}`}
+    >
+      <span className={`px-2 py-2 text-base font-bold text-white ${theme.band}`}>
+        {t(`activation.plan_${plan.id}`)}
+      </span>
+      {badge ? (
+        <span className="absolute top-10 right-1/2 translate-x-1/2 rounded-full bg-foreground px-2 py-0.5 text-[10px] font-semibold tracking-wide whitespace-nowrap text-background uppercase">
+          {t(`activation.${badge}`)}
+        </span>
+      ) : null}
+      <span className="flex flex-1 flex-col items-center gap-1 px-2 pt-6 pb-3">
+        <span className={`text-2xl font-extrabold tabular-nums ${theme.price}`}>
+          {formatMoney(plan.price)}
+        </span>
+        <span className="min-h-4 text-xs text-muted-foreground">
+          {plan.id === 'permanent'
+            ? t('activation.pay_once')
+            : perMonth
+              ? t('activation.per_month', { price: formatMoney(perMonth) })
+              : ''}
+        </span>
+        <span className="min-h-5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+          {saving > 0 ? t('activation.save_percent', { percent: saving }) : ''}
+        </span>
+      </span>
+      <span
+        className={`mx-3 mb-3 flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold text-white ${theme.button}`}
+      >
+        {busy ? (
+          <LoaderCircleIcon className="size-4 animate-spin" aria-hidden="true" />
+        ) : (
+          <QrCodeIcon className="size-4" aria-hidden="true" />
+        )}
+        {t('activation.buy')}
+      </span>
+    </button>
   );
 }
 
@@ -279,52 +405,85 @@ function PurchasePanel({ onStatus }: { onStatus: OnStatus }) {
   if (order) {
     const secondsLeft = Math.max(0, Math.floor((Date.parse(order.expiresAt) - Date.now()) / 1000));
     const clock = `${Math.floor(secondsLeft / 60)}:${String(secondsLeft % 60).padStart(2, '0')}`;
+    const theme = planTheme(order.plan);
     return (
-      <div className="flex flex-col gap-3">
-        <p className="text-sm font-medium">{t('activation.scan_title')}</p>
-        <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start">
-          {order.qrDataUrl ? (
-            <img
-              src={order.qrDataUrl}
-              alt={t('activation.scan_title')}
-              className="size-52 shrink-0 rounded-lg bg-white p-1"
-            />
-          ) : (
-            <div className="flex size-52 shrink-0 items-center justify-center rounded-lg border p-3 text-center text-xs text-muted-foreground">
-              {t('activation.qr_unavailable')}
-            </div>
-          )}
-          <div className="w-full flex-1">
-            <PaymentRow label={t('activation.bank')} value={order.bank} />
-            <PaymentRow label={t('activation.account')} value={order.account} copy />
-            <PaymentRow label={t('activation.holder')} value={order.holder} />
-            <PaymentRow label={t('activation.amount')} value={formatMoney(order.amount)} />
-            <PaymentRow label={t('activation.content')} value={order.content} copy />
-          </div>
+      <div className="flex flex-col gap-4">
+        <div
+          className={`flex flex-wrap items-center justify-between gap-2 rounded-xl px-4 py-3 text-white ${theme.band}`}
+        >
+          <span className="text-base font-bold">
+            {t('activation.order_plan', { plan: t(`activation.plan_${order.plan}`) })}
+          </span>
+          <span className="text-2xl font-extrabold tabular-nums">{formatMoney(order.amount)}</span>
         </div>
-        {paidAmount > 0 && paidAmount < order.amount ? (
-          <p role="alert" className="text-sm text-amber-500">
-            {t('activation.underpaid', {
-              paid: formatMoney(paidAmount),
-              left: formatMoney(order.amount - paidAmount),
-            })}
-          </p>
-        ) : null}
-        <p className="flex items-center gap-2 text-sm text-muted-foreground">
-          <LoaderCircleIcon className="size-4 shrink-0 animate-spin" aria-hidden="true" />
-          {secondsLeft > 0
-            ? `${t('activation.waiting')} ${t('activation.qr_time_left', { time: clock })}`
-            : t('activation.qr_expired')}
-        </p>
-        <div className="flex gap-2">
-          <Button type="button" variant="outline" onClick={() => setOrder(null)}>
-            {t('activation.back')}
-          </Button>
-          {secondsLeft === 0 && (
-            <Button type="button" onClick={() => void buy(order.plan)}>
-              {t('activation.new_code')}
-            </Button>
-          )}
+        <div className="grid items-start gap-5 md:grid-cols-[auto_1fr]">
+          <div className="flex flex-col items-center gap-2">
+            {order.qrDataUrl ? (
+              <img
+                src={order.qrDataUrl}
+                alt={t('activation.scan_title')}
+                className="size-72 rounded-xl border-4 border-white bg-white shadow-md"
+              />
+            ) : (
+              <div className="flex size-72 items-center justify-center rounded-xl border-2 border-dashed p-4 text-center text-sm text-muted-foreground">
+                {t('activation.qr_unavailable')}
+              </div>
+            )}
+            <p className="max-w-72 text-center text-sm font-medium">{t('activation.scan_title')}</p>
+          </div>
+          <div className="flex min-w-0 flex-col gap-3">
+            <div className="rounded-xl border bg-muted/30 px-4">
+              <PaymentRow label={t('activation.bank')} value={order.bank} />
+              <PaymentRow label={t('activation.account')} value={order.account} copy />
+              <PaymentRow label={t('activation.holder')} value={order.holder} />
+              <PaymentRow
+                label={t('activation.amount')}
+                value={formatMoney(order.amount)}
+                strong={`text-xl ${theme.price}`}
+              />
+              <PaymentRow
+                label={t('activation.content')}
+                value={order.content}
+                copy
+                strong="font-mono text-lg tracking-wider text-red-600 dark:text-red-400"
+              />
+            </div>
+            <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
+              {t('activation.content_warning')}
+            </p>
+            {paidAmount > 0 && paidAmount < order.amount ? (
+              <p
+                role="alert"
+                className="rounded-lg bg-red-500/10 px-3 py-2 text-sm font-medium text-red-600"
+              >
+                {t('activation.underpaid', {
+                  paid: formatMoney(paidAmount),
+                  left: formatMoney(order.amount - paidAmount),
+                })}
+              </p>
+            ) : null}
+            <p className="flex items-start gap-2 text-sm text-muted-foreground">
+              <LoaderCircleIcon
+                className="mt-0.5 size-4 shrink-0 animate-spin"
+                aria-hidden="true"
+              />
+              <span>
+                {secondsLeft > 0
+                  ? `${t('activation.waiting')} ${t('activation.qr_time_left', { time: clock })}`
+                  : t('activation.qr_expired')}
+              </span>
+            </p>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => setOrder(null)}>
+                {t('activation.back')}
+              </Button>
+              {secondsLeft === 0 && (
+                <Button type="button" onClick={() => void buy(order.plan)}>
+                  {t('activation.new_code')}
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -353,26 +512,19 @@ function PurchasePanel({ onStatus }: { onStatus: OnStatus }) {
         </p>
       )}
       {plans && (
-        <div className="grid grid-cols-2 gap-2">
+        <div
+          className="grid gap-3"
+          style={{ gridTemplateColumns: `repeat(${Math.max(1, plans.length)}, minmax(0, 1fr))` }}
+        >
           {plans.map((plan) => (
-            <button
+            <PlanCard
               key={plan.id}
-              type="button"
+              plan={plan}
+              monthPrice={plans.find((p) => p.id === 'month1')?.price ?? null}
+              busy={busyPlan === plan.id}
               disabled={busyPlan !== null}
-              onClick={() => void buy(plan.id)}
-              className="flex flex-col items-start gap-1 rounded-lg border bg-card p-3 text-left transition hover:border-primary hover:bg-accent disabled:opacity-60"
-            >
-              <span className="text-sm font-semibold">{t(`activation.plan_${plan.id}`)}</span>
-              <span className="text-lg font-bold text-primary">{formatMoney(plan.price)}</span>
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                {busyPlan === plan.id ? (
-                  <LoaderCircleIcon className="size-3 animate-spin" aria-hidden="true" />
-                ) : (
-                  <QrCodeIcon className="size-3" aria-hidden="true" />
-                )}
-                {t('activation.buy')}
-              </span>
-            </button>
+              onBuy={() => void buy(plan.id)}
+            />
           ))}
         </div>
       )}
@@ -415,11 +567,13 @@ export function LicensePanel({
       <div className="space-y-2 border-t pt-3">
         <p className="text-xs font-medium text-muted-foreground">{t('activation.contact')}</p>
         <div className="flex flex-wrap gap-1.5">
-          {SUPPORT_CHANNELS.map(({ id, label, href }) => (
-            <ExternalLink key={id} href={href} variant="outline">
-              {label}
-            </ExternalLink>
-          ))}
+          {SUPPORT_CHANNELS.filter(({ id }) => PAYMENT_CONTACTS.includes(id)).map(
+            ({ id, label, href }) => (
+              <ExternalLink key={id} href={href} variant="outline">
+                {label}
+              </ExternalLink>
+            ),
+          )}
         </div>
       </div>
     </div>
@@ -450,7 +604,7 @@ function ActivationScreen({
   const { t, i18n } = useTranslation();
   return (
     <div className="app-surface flex h-full items-start justify-center overflow-y-auto bg-background p-6 text-foreground">
-      <div className="my-auto w-full max-w-xl space-y-4 rounded-xl border bg-card p-6 shadow-lg">
+      <div className="my-auto w-full max-w-4xl space-y-4 rounded-2xl border bg-card p-6 shadow-lg">
         <div className="flex items-center gap-3">
           <img src={brandIcon} alt="" width={56} height={56} />
           <div>
@@ -480,7 +634,7 @@ function LicenseDialog({
   const { t } = useTranslation();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-xl overflow-y-auto">
+      <DialogContent className="max-h-[92vh] w-[min(56rem,calc(100vw-2rem))] max-w-none overflow-y-auto sm:max-w-none">
         <DialogTitle>{t('activation.buy_title')}</DialogTitle>
         <LicensePanel status={status} onStatus={onStatus} />
       </DialogContent>
@@ -565,9 +719,9 @@ export function LicenseGate({ children }: { children: ReactNode }) {
   if (!status) return null;
   if (status.state === 'expired') return <ActivationScreen status={status} onStatus={setStatus} />;
   return (
-    <>
+    <MandatoryUpdateGate>
       {children}
       <StatusBadge status={status} onStatus={setStatus} />
-    </>
+    </MandatoryUpdateGate>
   );
 }

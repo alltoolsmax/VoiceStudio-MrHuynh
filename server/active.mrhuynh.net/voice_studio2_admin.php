@@ -105,6 +105,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                     ->execute([trim(($order['note'] ?? '') . ' (cấp tay từ quản trị)'), $order['id']]);
                 $issuedKey = $issued + ['machine' => $order['machine_code'], 'plan' => $issued['plan']];
             }
+        } elseif ($action === 'update_policy') {
+            vs2_save_update_policy((string) ($_POST['min_version'] ?? ''), (string) ($_POST['message'] ?? ''));
+            $flash = trim((string) ($_POST['min_version'] ?? '')) === ''
+                ? 'Đã tắt bắt buộc cập nhật.'
+                : 'Đã lưu: khách dùng bản thấp hơn ' . trim((string) $_POST['min_version']) . ' phải cập nhật mới dùng tiếp.';
         } elseif ($action === 'telegram') {
             $flash = vs2_telegram('🔔 Thử thông báo từ trang quản trị: kết nối Telegram hoạt động.')
                 ? 'Đã gửi tin nhắn thử tới Telegram.'
@@ -140,6 +145,8 @@ $today = $sum((new DateTimeImmutable('today', $tz))->getTimestamp());
 $month = $sum((new DateTimeImmutable('first day of this month midnight', $tz))->getTimestamp());
 $all = $sum(0);
 $pending = (int) $db->query("SELECT COUNT(*) FROM vs2_orders WHERE status IN ('pending','underpaid','error') AND created_at > " . (time() - 86400))->fetchColumn();
+$policy = vs2_update_policy();
+$latest = vs2_latest_release(__DIR__ . '/downloads');
 $statusLabels = ['pending' => 'Chờ thanh toán', 'paid' => 'Đã thanh toán', 'underpaid' => 'Thiếu tiền', 'error' => 'Lỗi cấp key'];
 $fmtTime = fn ($ts) => $ts ? (new DateTimeImmutable('@' . $ts))->setTimezone($tz)->format('d/m/Y H:i') : '';
 ?><!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -176,6 +183,24 @@ mã máy <code><?= vs2_h($issuedKey['machine']) ?></code>, hạn dùng: <?= $iss
 <div class="card"><span class="muted">Tổng (QR)</span><b><?= vs2_money((int) $all['total']) ?></b><span class="muted"><?= (int) $all['n'] ?> đơn</span></div>
 <div class="card"><span class="muted">Đơn cần xem (24 giờ)</span><b><?= $pending ?></b><span class="muted">chờ / thiếu tiền / lỗi</span></div>
 </div>
+
+<h2>Phát hành &amp; cập nhật</h2>
+<div class="box">
+<?php if ($latest): ?>
+<div>Bản mới nhất trong <code>downloads/</code>: <b><?= vs2_h($latest['version']) ?></b> — <code><?= vs2_h($latest['file']) ?></code>
+<?= $latest['size'] ? '(' . round($latest['size'] / 1048576) . ' MB)' : '<span style="color:#fca5a5">(chưa thấy file .exe!)</span>' ?>
+<span class="muted"> · <?= vs2_h(substr((string) $latest['date'], 0, 10)) ?></span></div>
+<div class="muted" style="margin-top:4px">App của khách tự thấy bản này, tự tải và hỏi khởi động lại để cài. Trang tải cho khách: <a href="downloads/" target="_blank">active.mrhuynh.net/downloads/</a></div>
+<?php else: ?>
+<div style="color:#fca5a5">Chưa có bản nào trong <code>active.mrhuynh.net/downloads/</code>. Upload 3 file do script build tạo ra (xem hướng dẫn).</div>
+<?php endif ?>
+<form method="post" style="margin-top:14px"><input type="hidden" name="csrf" value="<?= vs2_csrf() ?>"><input type="hidden" name="action" value="update_policy">
+<div class="grid">
+<label>Bắt buộc cập nhật: phiên bản tối thiểu (để trống = không bắt buộc)<input name="min_version" value="<?= vs2_h($policy['min_version']) ?>" placeholder="<?= vs2_h($latest['version'] ?? '1.0.1') ?>"></label>
+<label style="grid-column:span 2">Thông báo cho khách khi bắt buộc cập nhật<input name="message" value="<?= vs2_h($policy['message']) ?>" placeholder="Bản mới sửa lỗi quan trọng, vui lòng cập nhật để tiếp tục sử dụng."></label>
+<div><button>Lưu</button></div></div>
+<div class="muted" style="margin-top:6px">Đang bắt buộc: <?= $policy['min_version'] !== '' ? '<b>' . vs2_h($policy['min_version']) . '</b> trở lên' : 'không' ?>. Chỉ bật sau khi đã upload bản mới vào downloads/.</div>
+</form></div>
 
 <h2>Cấp key tay</h2>
 <form class="box" method="post"><input type="hidden" name="csrf" value="<?= vs2_csrf() ?>"><input type="hidden" name="action" value="issue">

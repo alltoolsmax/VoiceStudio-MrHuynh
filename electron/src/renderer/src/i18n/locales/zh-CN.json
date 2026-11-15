@@ -1291,7 +1291,7 @@
     "updater_desktop": "更新程序仅在桌面应用程序中运行。",
     "updater_development": "开发版本中无法使用更新。",
     "updater_package_manager": "更新由你的软件包管理器提供。",
-    "updater_no_config": "This build does not update itself. Download new versions from mrhuynh.net.",
+    "updater_no_config": "This build cannot update itself. Download new versions from active.mrhuynh.net/downloads.",
     "updater_store": "更新由应用商店提供。",
     "mcp_title": "MCP 语音绑定",
     "mcp_desc": "将客户端 ID 绑定到语音配置，让每个 MCP 代理使用自己的声音。",
@@ -2446,9 +2446,9 @@
     "save_diagnostics": "保存完整诊断信息以便附加",
     "save_diagnostics_failed": "无法保存诊断信息。请换一个文件夹,或不附带诊断信息发送报告。",
     "sent_pages": "最近访问的页面名称",
-    "not_sent": "绝不发送：你的音频、文本或声音。文件名可能出现在日志或你的描述中，请在提交前检查 GitHub 预览。",
-    "submit": "打开 GitHub Issue",
-    "title": "将在浏览器中打开预填的 GitHub Issues 页面。点击“提交”前不会发送任何内容。"
+    "not_sent": "Never sent: your audio, text or voices. File names may appear in logs or your description, so review the report before pasting it.",
+    "submit": "Copy report and open Zalo group",
+    "title": "Copies a bug report and opens the Zalo support group: just paste (Ctrl+V) and send. Nothing is sent automatically."
   },
   "crash": {
     "view": "查看崩溃详情",
@@ -4363,6 +4363,22 @@
     "licensed_until": "{{plan}} plan, valid through {{date}}",
     "licensed_permanent": "Lifetime license",
     "renew_badge": "{{days}} days left · Renew",
-    "license_section": "License"
+    "license_section": "License",
+    "update_required_title": "Update required to continue",
+    "update_required_versions": "You are on {{current}}; version {{min}} or later is required.",
+    "update_required_default": "A new version with important fixes is available. Please update to keep using the app. Your license and data are kept.",
+    "update_downloading": "Downloading the update… {{percent}}%",
+    "update_restart": "Restart to install",
+    "update_download": "Download update",
+    "update_working": "Checking for the update…",
+    "update_open_page": "Open download page",
+    "update_failed": "The automatic download failed. Click \"Open download page\" to download and install the new version.",
+    "badge_popular": "Popular",
+    "badge_best": "Best value",
+    "pay_once": "Pay once, use forever",
+    "per_month": "≈ {{price}}/month",
+    "save_percent": "Save {{percent}}%",
+    "order_plan": "Pay for the {{plan}} plan",
+    "content_warning": "Keep the transfer description unchanged (it is already in the QR code) so the app activates automatically."
   }
 }

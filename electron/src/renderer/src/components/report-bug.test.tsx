@@ -16,10 +16,7 @@ vi.mock('@/hooks/use-backend-status', () => ({
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { addBreadcrumb, clearBreadcrumbs } from '@shared/utils/breadcrumbs';
-import {
-  _resetBackendContactForTests,
-  recordBackendContact,
-} from '@shared/utils/backendContact';
+import { _resetBackendContactForTests, recordBackendContact } from '@shared/utils/backendContact';
 const mock = vi.hoisted(() => ({
   saveData: vi.fn(),
   snapshotFailure: undefined as { code: string; stage: string } | undefined,
@@ -51,7 +48,23 @@ vi.mock('./bridge', () => ({
 vi.mock('@/router', () => ({ router: { navigate: mock.navigate } }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 import { ReportBug } from './report-bug';
+// Voice Studio - Mr.Huỳnh: báo cáo được chép vào bộ nhớ tạm rồi mở nhóm Zalo.
+const clipboard = vi.fn().mockResolvedValue(undefined);
+Object.defineProperty(navigator, 'clipboard', {
+  value: { writeText: clipboard },
+  configurable: true,
+});
+function lastReport(): { title: string; body: string } {
+  const text = String(clipboard.mock.calls.at(-1)![0]);
+  const cut = text.indexOf('\n\n');
+  return { title: text.slice(0, cut), body: text.slice(cut + 2) };
+}
+function reportUrl() {
+  const { title, body } = lastReport();
+  return { searchParams: new URLSearchParams({ title, body }) };
+}
 beforeEach(() => {
+  clipboard.mockClear();
   mock.snapshotFailure = undefined;
   mock.saveData.mockReset();
   clearBreadcrumbs();
@@ -99,8 +112,8 @@ it.each([true, false])(
     expect(mock.api).not.toHaveBeenCalled();
     await submitReport();
     await waitFor(() => expect(mock.open).toHaveBeenCalledTimes(1));
-    const url = new URL(mock.open.mock.calls[0]![0]);
-    expect(url.origin).toBe('https://github.com');
+    const url = reportUrl();
+    expect(mock.open).toHaveBeenCalledWith('https://zalo.me/g/lzcnxj126');
     const body = url.searchParams.get('body')!;
     expect(body).toContain('Electron');
     expect(body).not.toContain(secret);
@@ -130,7 +143,7 @@ it('includes setup diagnostics in a reviewable GitHub report without a working b
   render(<ReportBug error="Runtime setup failed" setup />);
   await submitReport('Torch download stopped at 13 MB');
   await waitFor(() => expect(mock.open).toHaveBeenCalledTimes(1));
-  const body = new URL(mock.open.mock.calls[0]![0]).searchParams.get('body')!;
+  const body = lastReport().body;
   expect(body).toContain('Runtime setup');
   expect(body).toContain('900 second timeout');
   expect(body).toContain("cannot decrypt peer's message");
@@ -147,7 +160,7 @@ it('navigates the reserved browser window after diagnostics resolve', async () =
   await submitReport();
   expect(popup.opener).toBeNull();
   await waitFor(() => expect(replace).toHaveBeenCalledTimes(1));
-  expect(replace.mock.calls[0]![0]).toContain('https://github.com/');
+  expect(replace.mock.calls[0]![0]).toBe('https://zalo.me/g/lzcnxj126');
 });
 
 it('preserves the scrubbed current crash and original chained cause when the API is down', async () => {
@@ -156,7 +169,7 @@ it('preserves the scrubbed current crash and original chained cause when the API
   render(<ReportBug />);
   await submitReport();
   await waitFor(() => expect(mock.open).toHaveBeenCalledTimes(1));
-  const body = new URL(mock.open.mock.calls[0]![0]).searchParams.get('body')!;
+  const body = lastReport().body;
   expect(body).toContain('## Current backend failure');
   expect(body).toContain('Exit code: 1');
   expect(body).toContain('ValueError: original failure');
@@ -185,7 +198,7 @@ it('includes the durable native crash journal when the backend API is unavailabl
   render(<ReportBug />);
   await submitReport();
   await waitFor(() => expect(mock.open).toHaveBeenCalledTimes(1));
-  const body = new URL(mock.open.mock.calls[0]![0]).searchParams.get('body')!;
+  const body = lastReport().body;
   expect(body).toContain('## Last native backend exit');
   expect(body).toContain('Exit code: 23');
   expect(body).toContain('Uptime (seconds): 4');
@@ -197,7 +210,7 @@ it.skip('names the exact build, not just the version', async () => {
   render(<ReportBug />);
   await submitReport();
   await waitFor(() => expect(mock.open).toHaveBeenCalledTimes(1));
-  const body = new URL(mock.open.mock.calls[0]![0]).searchParams.get('body')!;
+  const body = lastReport().body;
   expect(body).toMatch(/\*\*App:\*\* Voice Studio - Mr.Huỳnh \S+ \(build [0-9a-f]{9}\)/);
 });
 it('describes the machine and runtime from the app when the backend never started (#3156)', async () => {
@@ -212,7 +225,7 @@ it('describes the machine and runtime from the app when the backend never starte
   render(<ReportBug />);
   await submitReport();
   await waitFor(() => expect(mock.open).toHaveBeenCalledTimes(1));
-  const body = new URL(mock.open.mock.calls[0]![0]).searchParams.get('body')!;
+  const body = lastReport().body;
   expect(body).toContain('os (app): win32 Windows 11 Pro (10.0.26100)');
   expect(body).toContain('runtime python: MISSING');
   expect(body).toContain('runtime path flags: onedrive, non-ascii');
@@ -228,7 +241,7 @@ it('does not repeat machine facts the backend already reported', async () => {
   render(<ReportBug />);
   await submitReport();
   await waitFor(() => expect(mock.open).toHaveBeenCalledTimes(1));
-  const body = new URL(mock.open.mock.calls[0]![0]).searchParams.get('body')!;
+  const body = lastReport().body;
   expect(body).not.toContain('os (app)');
   expect(body).toContain('runtime python: present');
 });
@@ -252,7 +265,7 @@ it('labels the previous unclean shutdown separately and does not acknowledge it'
   render(<ReportBug />);
   await submitReport();
   await waitFor(() => expect(mock.open).toHaveBeenCalledTimes(1));
-  const body = new URL(mock.open.mock.calls[0]![0]).searchParams.get('body')!;
+  const body = lastReport().body;
   expect(body).toContain('## Previous unclean shutdown');
   expect(body).not.toContain('## Current backend failure');
   expect(body).toContain('1970-01-01T00:16:40.000Z');
@@ -297,7 +310,7 @@ it('files anyway after the stale-build warning and records that context', async 
   fireEvent.click(screen.getByRole('button', { name: 'reportBug.staleFileAnyway' }));
 
   await waitFor(() => expect(mock.open).toHaveBeenCalledTimes(1));
-  const body = new URL(mock.open.mock.calls[0]![0]).searchParams.get('body')!;
+  const body = lastReport().body;
   expect(body).toContain('**Build status:** OUTDATED');
   expect(body).toContain('v0.6.0');
 });
@@ -337,7 +350,7 @@ it('includes privacy-safe route history and pre-report backend reachability', as
   await submitReport();
 
   await waitFor(() => expect(mock.open).toHaveBeenCalledTimes(1));
-  const body = new URL(mock.open.mock.calls[0]![0]).searchParams.get('body')!;
+  const body = lastReport().body;
   expect(body).toContain('## Backend reachability');
   expect(body).toContain('**Connection:** `managed local`');
   expect(body).toContain('**Last backend response:** 5 s before this report');
@@ -363,7 +376,7 @@ it('attaches the scrubbed current backend log when a live operation fails', asyn
   await submitReport();
 
   await waitFor(() => expect(mock.open).toHaveBeenCalledTimes(1));
-  const body = new URL(mock.open.mock.calls[0]![0]).searchParams.get('body')!;
+  const body = lastReport().body;
   expect(body).toContain('## Current backend log');
   expect(body).toContain('RuntimeError: failed in ~/model');
   expect(body).not.toContain('/Users/alice');
@@ -383,7 +396,7 @@ it('includes arch, disk free and active ASR engine when the backend answers (#24
   await submitReport();
 
   await waitFor(() => expect(mock.open).toHaveBeenCalledTimes(1));
-  const body = new URL(mock.open.mock.calls[0]![0]).searchParams.get('body')!;
+  const body = lastReport().body;
   expect(body).toContain('arch');
   expect(body).toContain('arm64');
   expect(body).toContain('disk_free_gb');
@@ -399,33 +412,58 @@ it.each([
   [null, 'SIGILL', true],
   [1, null, false],
   [null, 'SIGTERM', false],
-])('classifies current and recorded native failures (%s, %s)', async (exitCode, signal, nativeFault) => {
-  mock.api.mockRejectedValue(new Error('offline'));
-  mock.backendStatus.mockResolvedValue({
-    stage: 'crashed', managed: true, remote: false, exitCode, exitSignal: signal,
-    message: 'Backend exited', logTail: [],
-    lastCrash: { timestamp: 1000000, version: '0.5.4', exitCode, signal, uptimeMs: 1000, logTail: [] },
-  });
-  render(<ReportBug />);
-  await submitReport();
-  await waitFor(() => expect(mock.open).toHaveBeenCalledTimes(1));
-  const body = new URL(mock.open.mock.calls[0]![0]).searchParams.get('body')!;
-  expect(body.split('reportBug.native_fault_cause').length - 1).toBe(nativeFault ? 2 : 0);
-  if (exitCode === 3221225477) expect(body).toContain('STATUS_ACCESS_VIOLATION');
-  if (signal) expect(body.split('## Last native backend exit')[0]).toContain('Signal: ' + signal);
-});
+])(
+  'classifies current and recorded native failures (%s, %s)',
+  async (exitCode, signal, nativeFault) => {
+    mock.api.mockRejectedValue(new Error('offline'));
+    mock.backendStatus.mockResolvedValue({
+      stage: 'crashed',
+      managed: true,
+      remote: false,
+      exitCode,
+      exitSignal: signal,
+      message: 'Backend exited',
+      logTail: [],
+      lastCrash: {
+        timestamp: 1000000,
+        version: '0.5.4',
+        exitCode,
+        signal,
+        uptimeMs: 1000,
+        logTail: [],
+      },
+    });
+    render(<ReportBug />);
+    await submitReport();
+    await waitFor(() => expect(mock.open).toHaveBeenCalledTimes(1));
+    const body = lastReport().body;
+    expect(body.split('reportBug.native_fault_cause').length - 1).toBe(nativeFault ? 2 : 0);
+    if (exitCode === 3221225477) expect(body).toContain('STATUS_ACCESS_VIOLATION');
+    if (signal) expect(body.split('## Last native backend exit')[0]).toContain('Signal: ' + signal);
+  },
+);
 
 it('does not label an unreachable backend using a previous run’s signal', async () => {
   mock.api.mockRejectedValue(new Error('offline'));
   mock.backendStatus.mockResolvedValue({
-    stage: 'crashed', managed: false, remote: false,
-    message: 'Backend stopped answering', logTail: [],
-    lastCrash: { timestamp: 1000000, version: '0.5.4', exitCode: null, signal: 'SIGSEGV', uptimeMs: 1000, logTail: [] },
+    stage: 'crashed',
+    managed: false,
+    remote: false,
+    message: 'Backend stopped answering',
+    logTail: [],
+    lastCrash: {
+      timestamp: 1000000,
+      version: '0.5.4',
+      exitCode: null,
+      signal: 'SIGSEGV',
+      uptimeMs: 1000,
+      logTail: [],
+    },
   });
   render(<ReportBug />);
   await submitReport();
   await waitFor(() => expect(mock.open).toHaveBeenCalledTimes(1));
-  const body = new URL(mock.open.mock.calls[0]![0]).searchParams.get('body')!;
+  const body = lastReport().body;
   const [current, recorded] = body.split('## Last native backend exit');
   expect(current).not.toContain('reportBug.native_fault_cause');
   expect(recorded).toContain('reportBug.native_fault_cause');
@@ -452,7 +490,7 @@ it('lists what will be sent and puts the description in the issue title and body
   });
   fireEvent.click(screen.getByRole('button', { name: 'reportBug.submit' }));
   await waitFor(() => expect(mock.open).toHaveBeenCalledTimes(1));
-  const url = new URL(mock.open.mock.calls[0]![0]);
+  const url = reportUrl();
   expect(url.searchParams.get('title')).toMatch(/^\[Bug\] Dubbing stops at 40%/);
   expect(url.searchParams.get('title')).not.toContain('private-user');
   expect(url.searchParams.get('body')).toContain('**Summary:** Dubbing stops at 40%');
@@ -463,7 +501,7 @@ it('never splits an emoji when truncating the description for the title', async 
   render(<ReportBug />);
   await submitReport('a'.repeat(99) + '😀 tail');
   await waitFor(() => expect(mock.open).toHaveBeenCalledTimes(1));
-  const title = new URL(mock.open.mock.calls[0]![0]).searchParams.get('title')!;
+  const title = lastReport().title;
   expect(title).toBe('[Bug] ' + 'a'.repeat(99) + '😀');
 });
 
@@ -493,10 +531,9 @@ it('titles a coded failure by code and leads the report with its facts', async (
   render(<ReportBug />);
   await submitReport('spawn UNKNOWN');
   await waitFor(() => expect(mock.open).toHaveBeenCalledTimes(1));
-  const url = new URL(mock.open.mock.calls[0]![0]);
+  const url = reportUrl();
   const body = url.searchParams.get('body')!;
   expect(url.searchParams.get('title')).toBe('[Install] EXEC_REFUSED: spawn UNKNOWN');
-  expect(url.searchParams.get('labels')).toBe('bug,install');
   expect(body).toContain('<!-- vs-failure:EXEC_REFUSED:1 -->');
   expect(body).toContain('- Program: python.exe (runtime)');
   expect(body).toContain('- Smart App Control: off');

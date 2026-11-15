@@ -1,5 +1,12 @@
-import { expect, test, vi } from 'vitest';
-import { checkOrder, createOrder, fetchPlans, LICENSE_SERVER_URL } from './store-client';
+import { describe, expect, it, test, vi } from 'vitest';
+import {
+  checkOrder,
+  compareVersions,
+  createOrder,
+  fetchPlans,
+  fetchUpdatePolicy,
+  LICENSE_SERVER_URL,
+} from './store-client';
 
 const MACHINE = 'VSMH-K4V4-99VS-J484-XGTN';
 
@@ -72,19 +79,17 @@ test('creating an order sends the current key for renewals and inlines the QR im
 });
 
 test('a QR URL from anywhere but qr.sepay.vn is never fetched', async () => {
-  const fetchImpl = vi
-    .fn()
-    .mockResolvedValueOnce(
-      json({
-        ok: true,
-        order: {
-          code: 'ACT7K4M9Q2T',
-          plan: 'month1',
-          amount: 55000,
-          qr_url: 'https://evil.example/x.png',
-        },
-      }),
-    );
+  const fetchImpl = vi.fn().mockResolvedValueOnce(
+    json({
+      ok: true,
+      order: {
+        code: 'ACT7K4M9Q2T',
+        plan: 'month1',
+        amount: 55000,
+        qr_url: 'https://evil.example/x.png',
+      },
+    }),
+  );
   const result = await createOrder(MACHINE, 'month1', null, fetchImpl);
   expect(fetchImpl).toHaveBeenCalledTimes(1);
   expect(result).toMatchObject({ ok: true, order: { qrDataUrl: null } });
@@ -127,4 +132,33 @@ test('order polling returns the key only once paid', async () => {
     state: { status: 'paid', key: 'VSMH2-K', paidAmount: 55000 },
   });
   expect(await checkOrder(MACHINE, '../etc', vi.fn())).toEqual({ ok: false, error: 'bad_request' });
+});
+
+describe('update policy', () => {
+  const reply = (body: unknown) =>
+    vi.fn().mockResolvedValue({ status: 200, json: async () => body }) as unknown as typeof fetch;
+  it('compares versions numerically', () => {
+    expect(compareVersions('1.0.9', '1.0.10')).toBeLessThan(0);
+    expect(compareVersions('1.2.0', '1.1.9')).toBeGreaterThan(0);
+    expect(compareVersions('1.0.0', '1.0.0')).toBe(0);
+  });
+  it('requires an update only below the minimum version', async () => {
+    const f = reply({
+      ok: true,
+      min_version: '1.0.1',
+      message: 'Cập nhật',
+      latest_version: '1.0.2',
+    });
+    expect((await fetchUpdatePolicy('1.0.0', f)).required).toBe(true);
+    expect((await fetchUpdatePolicy('1.0.1', f)).required).toBe(false);
+    expect((await fetchUpdatePolicy('1.0.0', reply({ ok: true, min_version: '' }))).required).toBe(
+      false,
+    );
+  });
+  it('never blocks when the server cannot be reached', async () => {
+    const f = vi.fn().mockRejectedValue(new Error('offline')) as unknown as typeof fetch;
+    const policy = await fetchUpdatePolicy('0.0.1', f);
+    expect(policy.required).toBe(false);
+    expect(policy.downloadUrl).toBe('https://active.mrhuynh.net/downloads/');
+  });
 });

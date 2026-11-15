@@ -44,7 +44,7 @@ describe('distribution contract', () => {
     expect(distributionProfile('mac-app-store').applicationUpdates).toBe('store');
   });
 
-  test.skip('store ownership cannot be bypassed by a runtime environment variable', () => {
+  test('store ownership cannot be bypassed by a runtime environment variable', () => {
     expect(applicationUpdatesSupported(true, 'direct', false)).toBe(true);
     expect(applicationUpdatesSupported(true, 'direct', true)).toBe(false);
     expect(applicationUpdatesSupported(true, 'microsoft-store', false)).toBe(true);
@@ -53,7 +53,7 @@ describe('distribution contract', () => {
     expect(applicationUpdatesSupported(false, 'direct', false)).toBe(false);
   });
 
-  test.skip('a packaged build without app-update.yml cannot self-update (#3814)', () => {
+  test('a packaged build without app-update.yml cannot self-update (#3814)', () => {
     expect(applicationUpdatesUnsupportedReason(true, 'direct', false, false)).toBe(
       'no-update-config',
     );
@@ -66,7 +66,7 @@ describe('distribution contract', () => {
     expect(updateConfigPresent('/nonexistent-voicestudio-resources')).toBe(false);
   });
 
-  test.skip('names why updates are unsupported, development first', () => {
+  test('names why updates are unsupported, development first', () => {
     expect(applicationUpdatesUnsupportedReason(true, 'direct', false)).toBeNull();
     expect(applicationUpdatesUnsupportedReason(false, 'direct', true)).toBe('development');
     expect(applicationUpdatesUnsupportedReason(false, 'snap-store', false)).toBe('development');
@@ -87,8 +87,8 @@ describe('distribution contract', () => {
 });
 
 describe('Voice Studio - Mr.Huỳnh updates', () => {
-  test('never self-updates from the upstream VoiceStudio feed', () => {
-    expect(applicationUpdatesUnsupportedReason(true, 'direct', false, true)).toBe('no-update-config');
+  test('a packaged direct build updates itself (from active.mrhuynh.net)', () => {
+    expect(applicationUpdatesUnsupportedReason(true, 'direct', false, true)).toBeNull();
     expect(applicationUpdatesUnsupportedReason(false, 'direct', false, true)).toBe('development');
   });
 });
