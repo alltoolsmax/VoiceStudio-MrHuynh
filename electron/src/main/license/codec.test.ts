@@ -18,6 +18,11 @@ const MACHINE = 'VSMH-K4V4-99VS-J484-XGTN';
 const KEY =
   'VSMH1-040TM-Y60RJ-WYHYZ-Z04Z1-14MZ1-CE6QW-YF43C-3V4GW-RPT2J-K4RWJ-ZBD10-FTQB2-BRS0V-EWVRK-6Y6SC-SCTQE-C3F85-V11F0-ZR009-PGVQF-MRXZK-XF7VE-MGVC6-ZKF06-2BQG0';
 
+const KEY_MONTH1 =
+  'VSMH2-081AM-Y60RJ-WYHYZ-Z04Z0-0EG00-YDHFF-YGMAM-DF272-XPEE7-EMV0C-B4GB9-R6R8X-6S4CH-C6WQ7-E5NSK-57NJK-QT7W9-1D171-8J1E7-7GRKG-NFGKJ-JMK1H-QW926-GYBQN-3Z10G-10F';
+const KEY_PERMANENT_V2 =
+  'VSMH2-080TM-Y60RJ-WYHYZ-Z04Z0-00000-Z6DVK-FHS8Z-250AG-MFD56-09VE6-653RD-BFT8H-EXJM9-D0BMG-MVY1X-J3PNK-KC2SX-26H2R-C3A96-6T7X0-RAP19-KWPJ3-YAB0S-7EXGB-6F811-G82';
+
 describe('machine code', () => {
   test('matches the key generator for the same machine', () => {
     expect(machineCodeFromRaw(RAW_ID)).toBe(MACHINE);
@@ -30,9 +35,23 @@ describe('machine code', () => {
 });
 
 describe('license key', () => {
-  test('a generator key verifies for its machine', () => {
+  test('timed and permanent VSMH2 keys from the generator carry their plan and expiry', () => {
+    expect(checkKey(KEY_MONTH1, MACHINE, TEST_PUBLIC_KEY)).toEqual({
+      ok: true,
+      plan: 'month1',
+      issuedAt: new Date('2026-11-15T00:00:00.000Z'),
+      expiresAt: new Date('2026-02-28T00:00:00.000Z'),
+      serial: 7,
+    });
+    expect(checkKey(KEY_PERMANENT_V2, MACHINE, TEST_PUBLIC_KEY)).toMatchObject({
+      ok: true,
+      plan: 'permanent',
+      expiresAt: null,
+    });
+  });
+  test('an old VSMH1 key verifies for its machine as permanent', () => {
     const result = checkKey(KEY, MACHINE, TEST_PUBLIC_KEY);
-    expect(result).toMatchObject({ ok: true, serial: 4242 });
+    expect(result).toMatchObject({ ok: true, serial: 4242, plan: 'permanent', expiresAt: null });
     if (result.ok) expect(result.issuedAt.toISOString()).toBe('2026-11-15T00:00:00.000Z');
   });
   test('tolerates spaces, line breaks and lowercase from chat apps', () => {
@@ -121,11 +140,71 @@ describe('activation', () => {
     expect(evaluateLicense(deps).state).toBe('trial');
     expect(activateLicense(deps, 'not a key')).toMatchObject({ ok: false, reason: 'format' });
     const result = activateLicense(deps, KEY);
-    expect(result).toMatchObject({ ok: true, status: { state: 'licensed' } });
+    expect(result).toMatchObject({
+      ok: true,
+      status: { state: 'licensed', plan: 'permanent', expiresAt: null },
+    });
     now += TRIAL_MS * 30;
     expect(evaluateLicense(deps).state).toBe('licensed');
     const { rmSync } = await import('node:fs');
     rmSync(join(dir, 'a'), { recursive: true });
     expect(evaluateLicense(deps).state).toBe('licensed');
+  });
+});
+
+describe('timed plans and renewals', () => {
+  async function setup(now: number) {
+    const { mkdtempSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const dir = mkdtempSync(join(tmpdir(), 'vsmh-plan-'));
+    const clock = { now };
+    const deps: LicenseDeps = {
+      machineCode: MACHINE,
+      trial: memoryTrial(),
+      keyFiles: [join(dir, 'a', 'license.key'), join(dir, 'b', 'license.key')],
+      now: () => clock.now,
+      publicKey: TEST_PUBLIC_KEY,
+    };
+    return { deps, clock };
+  }
+
+  test('a timed key licenses until its expiry, then the plan has ended', async () => {
+    const { deps, clock } = await setup(Date.UTC(2026, 1, 1));
+    expect(activateLicense(deps, KEY_MONTH1)).toMatchObject({
+      ok: true,
+      status: { state: 'licensed', plan: 'month1', expiresAt: '2026-02-28T00:00:00.000Z' },
+    });
+    clock.now = Date.UTC(2026, 1, 28) - 1;
+    expect(evaluateLicense(deps).state).toBe('licensed');
+    clock.now = Date.UTC(2026, 1, 28);
+    expect(evaluateLicense(deps)).toEqual({
+      state: 'expired',
+      machineCode: MACHINE,
+      reason: 'license_ended',
+      plan: 'month1',
+      expiredAt: '2026-02-28T00:00:00.000Z',
+    });
+  });
+
+  test('an already-expired key is refused instead of replacing a good one', async () => {
+    const { deps } = await setup(Date.UTC(2026, 5, 1));
+    expect(activateLicense(deps, KEY_MONTH1)).toMatchObject({ ok: false, reason: 'expired' });
+  });
+
+  test('the better key is kept: permanent beats timed, and a timed key never shortens it', async () => {
+    const { deps } = await setup(Date.UTC(2026, 1, 1));
+    activateLicense(deps, KEY_PERMANENT_V2);
+    expect(activateLicense(deps, KEY_MONTH1)).toMatchObject({
+      ok: true,
+      status: { plan: 'permanent', expiresAt: null },
+    });
+  });
+
+  test('setting the clock back during a timed plan is caught', async () => {
+    const { deps, clock } = await setup(Date.UTC(2026, 1, 20));
+    activateLicense(deps, KEY_MONTH1);
+    clock.now = Date.UTC(2026, 1, 10);
+    expect(evaluateLicense(deps)).toMatchObject({ state: 'expired', reason: 'clock' });
   });
 });

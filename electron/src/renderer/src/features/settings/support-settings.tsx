@@ -3,6 +3,7 @@ import type { ComponentType, SVGProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import { brandIcon } from '@/lib/brand';
 import { ExternalLink } from '@/components/external-link';
+import { LicenseSummary } from '@/components/license-gate';
 import { SOURCE_CODE_URL, SUPPORT_CHANNELS } from '@shared/utils/contactLinks';
 import './support-settings.css';
 
@@ -48,6 +49,8 @@ export function SupportSettings() {
         <h1>{t('donate.hero_title')}</h1>
         <p>{t('donate.footer')}</p>
       </header>
+
+      <LicenseSummary />
 
       <section className="support-contact" aria-labelledby="support-contact-heading">
         <div className="support-contact-heading">

@@ -1,11 +1,12 @@
 /**
  * Bản quyền Voice Studio - Mr.Huỳnh: tự động dùng thử 24 giờ, sau đó cần key
- * vĩnh viễn gắn với mã máy (do app cấp key của Mr.Huỳnh tạo).
+ * gắn với mã máy — 1 tháng, 3 tháng, 1 năm hoặc vĩnh viễn — do máy chủ
+ * active.mrhuynh.net (mua qua QR) hoặc app cấp key của Mr.Huỳnh tạo.
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir, platform } from 'node:os';
 import { dirname, join } from 'node:path';
-import { checkKey, machineCodeFromRaw, normalizeCode } from './codec';
+import { checkKey, machineCodeFromRaw, normalizeCode, type KeyCheck, type PlanId } from './codec';
 import { rawMachineId } from './machine';
 import {
   decodeRecord,
@@ -23,19 +24,28 @@ export const TRIAL_MS = 24 * 60 * 60 * 1000;
 const CLOCK_TOLERANCE_MS = 10 * 60 * 1000;
 
 export type LicenseStatus =
-  | { state: 'licensed'; machineCode: string; issuedAt: string | null }
+  | {
+      state: 'licensed';
+      machineCode: string;
+      plan: PlanId;
+      /** null với gói vĩnh viễn. */
+      expiresAt: string | null;
+    }
   | { state: 'trial'; machineCode: string; endsAt: string }
   | {
       state: 'expired';
       machineCode: string;
-      reason: 'trial_ended' | 'tampered' | 'clock';
+      reason: 'trial_ended' | 'tampered' | 'clock' | 'license_ended';
+      /** Gói vừa hết hạn, khi reason là license_ended. */
+      plan?: PlanId;
+      expiredAt?: string;
     };
 
 export type ActivateResult =
   | { ok: true; status: LicenseStatus }
   | {
       ok: false;
-      reason: 'format' | 'signature' | 'machine' | 'version';
+      reason: 'format' | 'signature' | 'machine' | 'version' | 'expired';
       status: LicenseStatus;
     };
 
@@ -47,17 +57,60 @@ export interface LicenseDeps {
   publicKey?: string;
 }
 
-function readKey(files: string[], machineCode: string, publicKey: string) {
-  for (const file of files) {
+type ValidKey = Extract<KeyCheck, { ok: true }> & { text: string };
+
+/** Key "tốt" hơn: vĩnh viễn hơn có hạn; cùng có hạn thì hạn xa hơn. */
+function better(a: ValidKey | null, b: ValidKey | null): ValidKey | null {
+  if (!a) return b;
+  if (!b) return a;
+  if (!a.expiresAt) return a;
+  if (!b.expiresAt) return b;
+  return b.expiresAt.getTime() > a.expiresAt.getTime() ? b : a;
+}
+
+/** Key tốt nhất đã lưu trên máy (đúng chữ ký và đúng máy), kể cả đã hết hạn. */
+export function bestStoredKey(deps: LicenseDeps): ValidKey | null {
+  const publicKey = deps.publicKey ?? LICENSE_PUBLIC_KEY;
+  let best: ValidKey | null = null;
+  for (const file of deps.keyFiles) {
     try {
-      const text = readFileSync(file, 'utf8');
-      const result = checkKey(text, machineCode, publicKey);
-      if (result.ok) return result;
+      for (const line of readFileSync(file, 'utf8').split(/\r?\n/)) {
+        if (!line.trim()) continue;
+        const result = checkKey(line, deps.machineCode, publicKey);
+        if (result.ok) best = better(best, { ...result, text: normalizeCode(line) });
+      }
     } catch {
       // chưa có key ở đây
     }
   }
-  return null;
+  return best;
+}
+
+interface ClockState {
+  start: number;
+  lastSeen: number;
+  tampered: boolean;
+}
+
+/**
+ * Đọc và cập nhật bản ghi thời gian (lúc bắt đầu dùng thử, lần cuối chạy) ở
+ * mọi nơi lưu. Lần cuối chạy dùng để phát hiện lùi giờ máy, cho cả bản dùng
+ * thử lẫn gói có thời hạn.
+ */
+function touchClock(machineCode: string, trial: TrialBackend, now: number): ClockState {
+  const decoded = trial
+    .read()
+    .map((text) => decodeRecord(text, machineCode))
+    .filter((item) => item !== null);
+  const tampered = decoded.some((item) => !item.valid);
+  const records = decoded.filter((item) => item.valid).map((item) => item.record);
+  const start = records.length ? Math.min(...records.map((r) => r.s)) : now;
+  const lastSeen = records.length ? Math.max(...records.map((r) => r.l)) : now;
+  if (!tampered) {
+    const next: TrialRecord = { m: machineCode, s: start, l: Math.max(lastSeen, now) };
+    trial.write(encodeRecord(next));
+  }
+  return { start, lastSeen, tampered };
 }
 
 /** Tính trạng thái dùng thử và ghi lại bản ghi ở mọi nơi lưu. */
@@ -66,56 +119,64 @@ export function evaluateTrial(
   trial: TrialBackend,
   now: number,
 ): LicenseStatus {
-  const decoded = trial
-    .read()
-    .map((text) => decodeRecord(text, machineCode))
-    .filter((item) => item !== null);
-  if (decoded.some((item) => !item.valid)) {
-    return { state: 'expired', machineCode, reason: 'tampered' };
-  }
-  const records = decoded.map((item) => item.record);
-  const start = records.length ? Math.min(...records.map((r) => r.s)) : now;
-  const lastSeen = records.length ? Math.max(...records.map((r) => r.l)) : now;
-  const next: TrialRecord = {
-    m: machineCode,
-    s: start,
-    l: Math.max(lastSeen, now),
-  };
-  trial.write(encodeRecord(next));
-  if (now < lastSeen - CLOCK_TOLERANCE_MS) {
+  const clock = touchClock(machineCode, trial, now);
+  if (clock.tampered) return { state: 'expired', machineCode, reason: 'tampered' };
+  if (now < clock.lastSeen - CLOCK_TOLERANCE_MS) {
     return { state: 'expired', machineCode, reason: 'clock' };
   }
-  const endsAt = start + TRIAL_MS;
+  const endsAt = clock.start + TRIAL_MS;
   if (now >= endsAt) return { state: 'expired', machineCode, reason: 'trial_ended' };
-  return {
-    state: 'trial',
-    machineCode,
-    endsAt: new Date(endsAt).toISOString(),
-  };
+  return { state: 'trial', machineCode, endsAt: new Date(endsAt).toISOString() };
 }
 
 export function evaluateLicense(deps: LicenseDeps): LicenseStatus {
-  const publicKey = deps.publicKey ?? LICENSE_PUBLIC_KEY;
-  const key = readKey(deps.keyFiles, deps.machineCode, publicKey);
-  if (key) {
+  const key = bestStoredKey(deps);
+  const machineCode = deps.machineCode;
+  if (key && !key.expiresAt) {
+    return { state: 'licensed', machineCode, plan: key.plan, expiresAt: null };
+  }
+  if (key?.expiresAt) {
+    const now = deps.now();
+    const clock = touchClock(machineCode, deps.trial, now);
+    if (!clock.tampered && now < clock.lastSeen - CLOCK_TOLERANCE_MS) {
+      return { state: 'expired', machineCode, reason: 'clock' };
+    }
+    if (now < key.expiresAt.getTime()) {
+      return {
+        state: 'licensed',
+        machineCode,
+        plan: key.plan,
+        expiresAt: key.expiresAt.toISOString(),
+      };
+    }
     return {
-      state: 'licensed',
-      machineCode: deps.machineCode,
-      issuedAt: key.issuedAt.toISOString(),
+      state: 'expired',
+      machineCode,
+      reason: 'license_ended',
+      plan: key.plan,
+      expiredAt: key.expiresAt.toISOString(),
     };
   }
-  return evaluateTrial(deps.machineCode, deps.trial, deps.now());
+  return evaluateTrial(machineCode, deps.trial, deps.now());
 }
 
+/**
+ * Kích hoạt một key. Máy giữ key tốt nhất: key gia hạn (hạn xa hơn) thay key
+ * cũ; key cũ hơn key đang có vẫn được nhận nhưng không làm giảm hạn dùng.
+ */
 export function activateLicense(deps: LicenseDeps, keyText: string): ActivateResult {
   const publicKey = deps.publicKey ?? LICENSE_PUBLIC_KEY;
   const result = checkKey(keyText, deps.machineCode, publicKey);
   if (!result.ok) return { ok: false, reason: result.reason, status: evaluateLicense(deps) };
-  const normalized = normalizeCode(keyText);
+  if (result.expiresAt && result.expiresAt.getTime() <= deps.now()) {
+    return { ok: false, reason: 'expired', status: evaluateLicense(deps) };
+  }
+  const incoming: ValidKey = { ...result, text: normalizeCode(keyText) };
+  const best = better(bestStoredKey(deps), incoming)!;
   for (const file of deps.keyFiles) {
     try {
       mkdirSync(dirname(file), { recursive: true });
-      writeFileSync(file, `${normalized}\n`);
+      writeFileSync(file, `${best.text}\n`);
     } catch {
       // một nơi lỗi thì vẫn còn nơi khác
     }

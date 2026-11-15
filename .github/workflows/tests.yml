@@ -61,7 +61,7 @@ jobs:
       - run: bun run --cwd electron typecheck
       - run: bun run --cwd electron test
 
-  keygen:
+  keygen-and-server:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -70,3 +70,8 @@ jobs:
           python-version: '3.12'
       - run: pip install cryptography pytest
       - run: python -m pytest -q tools/keygen
+      - name: License server (PHP) end-to-end
+        run: |
+          php -v | head -1
+          php -m | grep -E 'sodium|pdo_sqlite'
+          python -m pytest -q server/tests

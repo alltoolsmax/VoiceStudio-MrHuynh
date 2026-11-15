@@ -19,10 +19,34 @@ def test_machine_code_matches_the_app():
     assert lic.machine_code_from_raw(RAW_ID) == MACHINE
 
 
+KEY_MONTH1 = (
+    "VSMH2-081AM-Y60RJ-WYHYZ-Z04Z0-0EG00-YDHFF-YGMAM-DF272-XPEE7-EMV0C-B4GB9-R6R8X-6S4CH-"
+    "C6WQ7-E5NSK-57NJK-QT7W9-1D171-8J1E7-7GRKG-NFGKJ-JMK1H-QW926-GYBQN-3Z10G-10F"
+)
+KEY_PERMANENT_V2 = (
+    "VSMH2-080TM-Y60RJ-WYHYZ-Z04Z0-00000-Z6DVK-FHS8Z-250AG-MFD56-09VE6-653RD-BFT8H-EXJM9-"
+    "D0BMG-MVY1X-J3PNK-KC2SX-26H2R-C3A96-6T7X0-RAP19-KWPJ3-YAB0S-7EXGB-6F811-G82"
+)
+
+
 def test_key_matches_the_app_vector():
     key = lic.load_private_key(TEST_PRIVATE)
     assert lic.public_key_hex(key) == TEST_PUBLIC
-    assert lic.issue_key(key, MACHINE, date(2026, 11, 15), 4242) == KEY
+    assert lic.issue_key_v1(key, MACHINE, date(2026, 11, 15), 4242) == KEY
+    assert lic.issue_key(key, MACHINE, "month1", date(2026, 1, 31), date(2026, 11, 15), 7) == KEY_MONTH1
+    assert lic.issue_key(key, MACHINE, "permanent", None, date(2026, 11, 15), 7) == KEY_PERMANENT_V2
+
+
+def test_plan_periods_follow_the_calendar():
+    assert lic.expiry_for("month1", date(2026, 1, 31)) == date(2026, 2, 28)
+    assert lic.expiry_for("month3", date(2026, 11, 15)) == date(2027, 2, 15)
+    assert lic.expiry_for("year1", date(2028, 2, 29)) == date(2029, 2, 28)
+    assert lic.expiry_for("permanent", date(2026, 11, 15)) is None
+
+
+def test_unknown_plan_is_refused():
+    with pytest.raises(ValueError):
+        lic.issue_key(lic.load_private_key(TEST_PRIVATE), MACHINE, "week1")
 
 
 def test_machine_code_input_is_forgiving_but_checked():

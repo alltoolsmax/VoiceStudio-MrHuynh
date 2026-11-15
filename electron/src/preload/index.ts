@@ -24,6 +24,9 @@ const bridge: VoiceStudioBridge = {
   license: {
     status: () => ipcRenderer.invoke('license:status'),
     activate: (key) => ipcRenderer.invoke('license:activate', key),
+    plans: () => ipcRenderer.invoke('license:plans'),
+    createOrder: (plan) => ipcRenderer.invoke('license:create-order', plan),
+    checkOrder: (code) => ipcRenderer.invoke('license:check-order', code),
   },
   browser: {
     open: (url) => ipcRenderer.invoke('site-browser:open', url),

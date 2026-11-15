@@ -2,12 +2,14 @@ import { app, ipcMain, type BrowserWindow } from 'electron';
 import { assertTrustedMainFrame } from '../ipc';
 import {
   activateLicense,
+  bestStoredKey,
   evaluateLicense,
   fetchNetworkTime,
   systemLicenseDeps,
   type LicenseDeps,
   type LicenseStatus,
 } from './index';
+import { checkOrder, createOrder, fetchPlans } from './store-client';
 
 /**
  * Bản chạy thử khi phát triển (chưa đóng gói) coi như đã kích hoạt, trừ khi đặt
@@ -31,7 +33,8 @@ export function registerLicenseIpc(
   const devStatus = (): LicenseStatus => ({
     state: 'licensed',
     machineCode: deps.machineCode,
-    issuedAt: null,
+    plan: 'permanent',
+    expiresAt: null,
   });
   const status = () => (licensingEnforced() ? evaluateLicense(deps) : devStatus());
   const ready = (async () => {
@@ -56,6 +59,28 @@ export function registerLicenseIpc(
     const result = activateLicense(deps, key);
     if (result.ok) onActivated();
     return result;
+  });
+  // Mua gói qua QR (máy chủ active.mrhuynh.net); chỉ gọi khi khách mở màn hình mua.
+  ipcMain.handle('license:plans', async (event) => {
+    assertTrustedMainFrame(event, getMainWindow());
+    return fetchPlans();
+  });
+  ipcMain.handle('license:create-order', async (event, plan: unknown) => {
+    assertTrustedMainFrame(event, getMainWindow());
+    await ready;
+    if (typeof plan !== 'string') return { ok: false, error: 'bad_request' };
+    // Gửi key đang có (đã ký) để máy chủ cộng dồn hạn khi gia hạn.
+    return createOrder(deps.machineCode, plan, bestStoredKey(deps)?.text ?? null);
+  });
+  ipcMain.handle('license:check-order', async (event, code: unknown) => {
+    assertTrustedMainFrame(event, getMainWindow());
+    await ready;
+    if (typeof code !== 'string') return { ok: false, error: 'bad_request' };
+    const result = await checkOrder(deps.machineCode, code);
+    if (!result.ok || result.state.status !== 'paid') return result;
+    const activation = activateLicense(deps, result.state.key);
+    if (activation.ok) onActivated();
+    return { ok: true, state: { status: 'paid' }, activation };
   });
   return { status, ready: () => ready };
 }

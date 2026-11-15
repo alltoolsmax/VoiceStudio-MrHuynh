@@ -1,6 +1,7 @@
 """App cấp key Voice Studio - Mr.Huỳnh (chỉ dùng trên máy của Mr.Huỳnh).
 
-Nhập mã máy khách gửi → tạo key kích hoạt vĩnh viễn. Khóa bí mật được nạp một
+Nhập mã máy khách gửi, chọn gói (1 tháng / 3 tháng / 1 năm / vĩnh viễn) → tạo key.
+Gia hạn: ô "Tính từ ngày" tự điền hạn hiện tại của máy đó (theo lịch sử) để cộng dồn. Khóa bí mật được nạp một
 lần từ tệp vsmh-private-key.txt và lưu trong %APPDATA%\\VSMH-KeyGen; nó không
 nằm trong mã nguồn hay trong file .exe.
 """
@@ -10,7 +11,7 @@ import csv
 import os
 import sys
 import tkinter as tk
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
@@ -19,7 +20,8 @@ import vsmh_license as lic
 APP_TITLE = "Cấp key Voice Studio - Mr.Huỳnh"
 # Khóa công khai có trong Voice Studio (electron/src/main/license/index.ts).
 EXPECTED_PUBLIC_KEY = "c6b424e5d1f327c5c8b3befd5dd0522e660e7bda559607cd18eb715354439cad"
-HISTORY_FIELDS = ["thoi_gian", "ma_may", "khach_hang", "ghi_chu", "key"]
+HISTORY_FIELDS = ["thoi_gian", "ma_may", "goi", "het_han", "khach_hang", "ghi_chu", "key"]
+PLAN_CHOICES = [("month1", "1 tháng"), ("month3", "3 tháng"), ("year1", "1 năm"), ("permanent", "Vĩnh viễn")]
 
 
 def data_dir() -> Path:
@@ -41,7 +43,7 @@ class KeyGenApp:
         self.key_file = data_dir() / "private.key"
         self.history_file = data_dir() / "history.csv"
         root.title(APP_TITLE)
-        root.geometry("900x640")
+        root.geometry("920x760")
         root.minsize(760, 520)
         try:
             root.iconbitmap(default=str(resource("icon.ico")))
@@ -71,7 +73,7 @@ class KeyGenApp:
         self.key_status.pack(anchor="w")
         ttk.Button(top, text="Nạp khóa bí mật…", command=self._choose_private_key).pack(side="right")
 
-        form = ttk.LabelFrame(self.root, text="Tạo key vĩnh viễn", padding=14)
+        form = ttk.LabelFrame(self.root, text="Tạo key", padding=14)
         form.pack(fill="x", padx=14)
         form.columnconfigure(1, weight=1)
 
@@ -85,15 +87,33 @@ class KeyGenApp:
         self.machine_hint = ttk.Label(form, text="Ví dụ: VSMH-K4V4-99VS-J484-XGTN", foreground="#6b7280")
         self.machine_hint.grid(row=1, column=1, sticky="w", padx=8)
 
-        ttk.Label(form, text="Tên khách hàng:").grid(row=2, column=0, sticky="w", pady=4)
+        ttk.Label(form, text="Gói:").grid(row=2, column=0, sticky="w", pady=4)
+        self.plan = tk.StringVar(value=PLAN_CHOICES[0][1])
+        plan_box = ttk.Combobox(
+            form, textvariable=self.plan, values=[label for _, label in PLAN_CHOICES],
+            state="readonly", width=18,
+        )
+        plan_box.grid(row=2, column=1, sticky="w", padx=8)
+
+        ttk.Label(form, text="Tính từ ngày:").grid(row=3, column=0, sticky="w", pady=4)
+        start_row = ttk.Frame(form)
+        start_row.grid(row=3, column=1, columnspan=2, sticky="ew", padx=8)
+        self.start = tk.StringVar()
+        ttk.Entry(start_row, textvariable=self.start, width=14).pack(side="left")
+        self.start_hint = ttk.Label(
+            start_row, text="dd/mm/yyyy — để trống = hôm nay", foreground="#6b7280"
+        )
+        self.start_hint.pack(side="left", padx=8)
+
+        ttk.Label(form, text="Tên khách hàng:").grid(row=4, column=0, sticky="w", pady=4)
         self.customer = tk.StringVar()
-        ttk.Entry(form, textvariable=self.customer).grid(row=2, column=1, columnspan=2, sticky="ew", padx=8)
-        ttk.Label(form, text="Ghi chú:").grid(row=3, column=0, sticky="w", pady=4)
+        ttk.Entry(form, textvariable=self.customer).grid(row=4, column=1, columnspan=2, sticky="ew", padx=8)
+        ttk.Label(form, text="Ghi chú:").grid(row=5, column=0, sticky="w", pady=4)
         self.note = tk.StringVar()
-        ttk.Entry(form, textvariable=self.note).grid(row=3, column=1, columnspan=2, sticky="ew", padx=8)
+        ttk.Entry(form, textvariable=self.note).grid(row=5, column=1, columnspan=2, sticky="ew", padx=8)
 
         self.generate_btn = ttk.Button(form, text="Tạo key", style="Big.TButton", command=self._generate)
-        self.generate_btn.grid(row=4, column=1, sticky="w", padx=8, pady=(10, 4))
+        self.generate_btn.grid(row=6, column=1, sticky="w", padx=8, pady=(10, 4))
 
         out = ttk.LabelFrame(self.root, text="Key kích hoạt (gửi cho khách)", padding=14)
         out.pack(fill="x", padx=14, pady=10)
@@ -113,13 +133,15 @@ class KeyGenApp:
         ttk.Button(bar, text="Xuất Excel…", command=self._export).pack(side="right")
         ttk.Button(bar, text="Sao chép key đã chọn", command=self._copy_selected).pack(side="right", padx=6)
 
-        columns = ("thoi_gian", "ma_may", "khach_hang", "ghi_chu")
+        columns = ("thoi_gian", "ma_may", "goi", "het_han", "khach_hang", "ghi_chu")
         self.tree = ttk.Treeview(hist, columns=columns, show="headings", height=8)
         for col, label, width in (
-            ("thoi_gian", "Thời gian", 140),
-            ("ma_may", "Mã máy", 220),
-            ("khach_hang", "Khách hàng", 180),
-            ("ghi_chu", "Ghi chú", 240),
+            ("thoi_gian", "Thời gian", 125),
+            ("ma_may", "Mã máy", 205),
+            ("goi", "Gói", 80),
+            ("het_han", "Hết hạn", 95),
+            ("khach_hang", "Khách hàng", 150),
+            ("ghi_chu", "Ghi chú", 180),
         ):
             self.tree.heading(col, text=label)
             self.tree.column(col, width=width, anchor="w")
@@ -174,9 +196,47 @@ class KeyGenApp:
             self.machine_hint.configure(text="Ví dụ: VSMH-K4V4-99VS-J484-XGTN", foreground="#6b7280")
         elif body:
             self.machine_hint.configure(text="✓ Mã máy hợp lệ", foreground="#15803d")
+            self._suggest_start(lic.format_machine_code(body))
         else:
             self.machine_hint.configure(text="✗ Mã máy sai hoặc gõ nhầm ký tự", foreground="#b91c1c")
         return body
+
+    def _latest_expiry(self, machine: str) -> date | None:
+        """Hạn xa nhất đã cấp cho máy này (gói có hạn) trong lịch sử."""
+        latest = None
+        for row in self.history:
+            if row.get("ma_may") != machine or not row.get("het_han"):
+                continue
+            try:
+                expiry = datetime.strptime(row["het_han"], "%d/%m/%Y").date() + timedelta(days=1)
+            except ValueError:
+                continue
+            latest = expiry if latest is None or expiry > latest else latest
+        return latest
+
+    def _suggest_start(self, machine: str):
+        latest = self._latest_expiry(machine)
+        today = datetime.now().date()
+        if latest and latest > today:
+            self.start.set(latest.strftime("%d/%m/%Y"))
+            self.start_hint.configure(
+                text=f"Máy này còn hạn đến {(latest - timedelta(days=1)):%d/%m/%Y} → tự cộng dồn",
+                foreground="#15803d",
+            )
+        else:
+            self.start.set("")
+            self.start_hint.configure(text="dd/mm/yyyy — để trống = hôm nay", foreground="#6b7280")
+
+    def _parse_start(self) -> date | None:
+        text = self.start.get().strip()
+        if not text:
+            return datetime.now().date()
+        for fmt in ("%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y"):
+            try:
+                return datetime.strptime(text, fmt).date()
+            except ValueError:
+                continue
+        return None
 
     def _paste_machine(self):
         try:
@@ -193,12 +253,22 @@ class KeyGenApp:
             messagebox.showwarning(APP_TITLE, "Mã máy không hợp lệ. Hãy kiểm tra lại mã khách gửi.")
             return
         machine = lic.format_machine_code(body)
-        key = lic.issue_key(self.private_key, machine)
+        plan = next(pid for pid, label in PLAN_CHOICES if label == self.plan.get())
+        start = self._parse_start()
+        if start is None:
+            messagebox.showwarning(APP_TITLE, "Ngày bắt đầu không hợp lệ. Nhập dạng dd/mm/yyyy.")
+            return
+        key = lic.issue_key(self.private_key, machine, plan, start)
+        expiry = lic.expiry_for(plan, start)
+        # Hiện ngày cuối cùng còn dùng được (key hết hạn lúc bắt đầu ngày `expiry`).
+        last_day = (expiry - timedelta(days=1)).strftime("%d/%m/%Y") if expiry else ""
         self._show_output(key)
         self._copy(key)
         row = {
             "thoi_gian": datetime.now().strftime("%Y-%m-%d %H:%M"),
             "ma_may": machine,
+            "goi": self.plan.get(),
+            "het_han": last_day,
             "khach_hang": self.customer.get().strip(),
             "ghi_chu": self.note.get().strip(),
             "key": key,
@@ -208,6 +278,12 @@ class KeyGenApp:
         self._refresh_history()
         self.customer.set("")
         self.note.set("")
+        self._suggest_start(machine)
+        messagebox.showinfo(
+            APP_TITLE,
+            f"Đã tạo và sao chép key {self.plan.get()}"
+            + (f", dùng đến hết ngày {last_day}." if last_day else ", vĩnh viễn."),
+        )
 
     def _show_output(self, key: str):
         self.output.configure(state="normal")
@@ -235,7 +311,7 @@ class KeyGenApp:
 
     def _save_history(self):
         with self.history_file.open("w", encoding="utf-8-sig", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=HISTORY_FIELDS)
+            writer = csv.DictWriter(f, fieldnames=HISTORY_FIELDS, restval="", extrasaction="ignore")
             writer.writeheader()
             writer.writerows(self.history)
 
@@ -248,7 +324,10 @@ class KeyGenApp:
                 continue
             self.tree.insert(
                 "", "end", iid=str(index),
-                values=(row["thoi_gian"], row["ma_may"], row["khach_hang"], row["ghi_chu"]),
+                values=(
+                    row.get("thoi_gian", ""), row.get("ma_may", ""), row.get("goi") or "Vĩnh viễn",
+                    row.get("het_han") or "", row.get("khach_hang", ""), row.get("ghi_chu", ""),
+                ),
             )
 
     def _copy_selected(self):
@@ -275,12 +354,12 @@ class KeyGenApp:
         wb = Workbook()
         ws = wb.active
         ws.title = "Lịch sử cấp key"
-        ws.append(["Thời gian", "Mã máy", "Khách hàng", "Ghi chú", "Key"])
+        ws.append(["Thời gian", "Mã máy", "Gói", "Hết hạn", "Khách hàng", "Ghi chú", "Key"])
         for cell in ws[1]:
             cell.font = Font(bold=True)
         for row in self.history:
-            ws.append([row.get(k, "") for k in HISTORY_FIELDS])
-        for col, width in zip("ABCDE", (18, 28, 24, 30, 90)):
+            ws.append([row.get(k) or ("Vĩnh viễn" if k == "goi" else "") for k in HISTORY_FIELDS])
+        for col, width in zip("ABCDEFG", (18, 28, 12, 12, 24, 30, 90)):
             ws.column_dimensions[col].width = width
         ws.freeze_panes = "A2"
         wb.save(path)

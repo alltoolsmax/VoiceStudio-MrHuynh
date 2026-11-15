@@ -16,11 +16,21 @@ Bộ cài chưa được ký số, nên Windows SmartScreen có thể hiện c�
 
 ## Bản quyền và kích hoạt
 
-- Cài xong là **dùng thử miễn phí 24 giờ**, không cần key. Góc trái màn hình hiện thời gian còn lại.
-- Hết 24 giờ, ứng dụng hiện **mã máy** (dạng `VSMH-XXXX-XXXX-XXXX-XXXX`). Gửi mã này cho Mr.Huỳnh
-  qua một trong các kênh bên dưới để nhận **key kích hoạt vĩnh viễn**, rồi dán key vào ứng dụng.
-- Key chỉ dùng được trên đúng máy có mã máy đó. Cài lại Windows hoặc thay bo mạch chủ sẽ đổi mã máy,
-  khi đó hãy gửi mã mới để được cấp lại key.
+- Cài xong là **dùng thử miễn phí 24 giờ**, không cần key.
+- Mua gói ngay trong ứng dụng: chọn gói, **quét mã QR** bằng app ngân hàng, ứng dụng **tự kích hoạt**
+  vài giây sau khi chuyển khoản.
+
+  | Gói | Giá |
+  |---|---|
+  | 1 tháng | 55.000đ |
+  | 3 tháng | 150.000đ |
+  | 1 năm | 500.000đ |
+  | Vĩnh viễn | 1.000.000đ |
+
+- Gia hạn khi gói còn hạn: thời gian mới được **cộng thêm** vào ngày hết hạn hiện tại.
+- Không kích hoạt online được? Gửi **mã máy** (Cài đặt → Hỗ trợ) cho Mr.Huỳnh qua các kênh bên dưới
+  để nhận key, rồi dán vào mục **Nhập key**.
+- Key chỉ dùng trên đúng máy có mã máy đó. Cài lại Windows hoặc thay bo mạch chủ sẽ đổi mã máy.
 
 ## Hỗ trợ
 

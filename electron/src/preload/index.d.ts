@@ -431,28 +431,70 @@ export interface SetupConnectionCheck {
   checkedAt: number;
 }
 
+export type LicensePlanId = 'permanent' | 'month1' | 'month3' | 'year1';
+
 export type LicenseStatus =
-  | { state: 'licensed'; machineCode: string; issuedAt: string | null }
+  | { state: 'licensed'; machineCode: string; plan: LicensePlanId; expiresAt: string | null }
   | { state: 'trial'; machineCode: string; endsAt: string }
   | {
       state: 'expired';
       machineCode: string;
-      reason: 'trial_ended' | 'tampered' | 'clock';
+      reason: 'trial_ended' | 'tampered' | 'clock' | 'license_ended';
+      plan?: LicensePlanId;
+      expiredAt?: string;
     };
 
 export type LicenseActivateResult =
   | { ok: true; status: LicenseStatus }
   | {
       ok: false;
-      reason: 'format' | 'signature' | 'machine' | 'version';
+      reason: 'format' | 'signature' | 'machine' | 'version' | 'expired';
       status: LicenseStatus;
     };
+
+export type LicenseStoreError =
+  | 'offline'
+  | 'server_error'
+  | 'already_permanent'
+  | 'rate_limited'
+  | 'bad_request';
+
+export interface LicenseStorePlan {
+  id: LicensePlanId | 'test';
+  label: string;
+  price: number;
+}
+
+export interface LicenseStoreOrder {
+  code: string;
+  plan: LicensePlanId | 'test';
+  planLabel: string;
+  amount: number;
+  bank: string;
+  account: string;
+  holder: string;
+  content: string;
+  expiresAt: string;
+  qrDataUrl: string | null;
+}
+
+export type LicenseOrderCheck =
+  | { ok: false; error: LicenseStoreError }
+  | { ok: true; state: { status: 'pending' | 'underpaid' | 'error'; paidAmount: number } }
+  | { ok: true; state: { status: 'paid' }; activation: LicenseActivateResult };
 
 export interface VoiceStudioBridge {
   /** Bản quyền Voice Studio - Mr.Huỳnh: dùng thử 24 giờ, key vĩnh viễn theo mã máy. */
   license?: {
     status(): Promise<LicenseStatus>;
     activate(key: string): Promise<LicenseActivateResult>;
+    plans(): Promise<
+      { ok: true; plans: LicenseStorePlan[] } | { ok: false; error: LicenseStoreError }
+    >;
+    createOrder(
+      plan: string,
+    ): Promise<{ ok: true; order: LicenseStoreOrder } | { ok: false; error: LicenseStoreError }>;
+    checkOrder(code: string): Promise<LicenseOrderCheck>;
   };
   /** VoiceStudio Cloud account; never carries a token. */
   account: {
